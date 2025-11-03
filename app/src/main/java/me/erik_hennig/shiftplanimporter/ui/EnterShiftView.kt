@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import me.erik_hennig.shiftplanimporter.Shift
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -24,7 +25,10 @@ import java.util.Locale
 fun EnterShiftView(
     modifier: Modifier = Modifier,
     date: Date,
-    shifts: List<String>
+    shiftOptions: List<Shift>,
+    onShiftSelected: (Shift) -> Unit,
+    onUndo: () -> Unit,
+    onSkip: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("EEEE, dd.MM.yyyy", Locale.getDefault())
     val currentDate = dateFormat.format(date)
@@ -40,22 +44,22 @@ fun EnterShiftView(
             thickness = 2.dp,
             color = Color.Gray
         )
-        shifts.forEach { shift ->
+        shiftOptions.forEach { shift ->
             Button(
-                onClick = { /* TODO */ },
+                onClick = { onShiftSelected(shift) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = shift)
+                Text(text = shift.displayName)
             }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = { /* TODO */ }) {
+            Button(onClick = onUndo) {
                 Text(text = "Undo")
             }
-            Button(onClick = { /* TODO */ }) {
+            Button(onClick = onSkip) {
                 Text(text = "Skip")
             }
         }
@@ -68,7 +72,10 @@ fun EnterShiftViewPreview() {
     ShiftPlanImporterTheme {
         EnterShiftView(
             date = Date(),
-            shifts = listOf("Frühdienst", "Spätdienst", "Nachtdienst", "Sonderamt")
+            shiftOptions = Shift.entries,
+            onShiftSelected = {},
+            onUndo = {},
+            onSkip = {}
         )
     }
 }

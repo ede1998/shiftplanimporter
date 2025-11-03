@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import me.erik_hennig.shiftplanimporter.DateRange
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -23,7 +24,8 @@ import java.util.Locale
 @Composable
 fun TimeFrameView(
     modifier: Modifier = Modifier,
-    upcomingMonths: List<Date>
+    upcomingMonths: List<Date>,
+    onMonthSelected: (DateRange) -> Unit
 ) {
     val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     Column(
@@ -40,7 +42,15 @@ fun TimeFrameView(
 
         upcomingMonths.forEach { date ->
             Button(
-                onClick = { /* TODO: Handle month selection */ },
+                onClick = {
+                    val calendar = Calendar.getInstance()
+                    calendar.time = date
+                    val endDate = calendar.apply {
+                        set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+                    }.time
+                    val dateRange = DateRange(start = date, end = endDate)
+                    onMonthSelected(dateRange)
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = monthFormat.format(date))
@@ -68,6 +78,6 @@ fun TimeFrameViewPreview() {
         calendar.add(Calendar.MONTH, 1)
     }
     ShiftPlanImporterTheme {
-        TimeFrameView(upcomingMonths = upcomingMonths)
+        TimeFrameView(upcomingMonths = upcomingMonths, onMonthSelected = {})
     }
 }
