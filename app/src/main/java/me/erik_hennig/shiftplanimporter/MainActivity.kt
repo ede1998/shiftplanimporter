@@ -7,11 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import me.erik_hennig.shiftplanimporter.ui.EnterShiftView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
+import java.util.Date
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,9 +21,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             ShiftPlanImporterTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+                    EnterShiftView(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize(),
+                        date = Date(),
+                        shifts = listOf("Frühdienst", "Spätdienst", "Nachtdienst", "Sonderamt")
                     )
                 }
             }
@@ -30,18 +34,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainActivityPreview() {
     ShiftPlanImporterTheme {
-        Greeting("Android")
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            EnterShiftView(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                date = Date(),
+                shifts = listOf("Frühdienst", "Spätdienst", "Nachtdienst", "Sonderamt")
+            )
+        }
     }
 }
