@@ -8,46 +8,44 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateRange
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.EnteringState.*
 import me.erik_hennig.shiftplanimporter.ui.EnterShiftView
 import me.erik_hennig.shiftplanimporter.ui.TimeFrameView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import java.util.Calendar
-import java.util.Date
+import kotlinx.datetime.plus
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.toJavaLocalDate
+import java.time.ZoneId
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-
-data class DateRange(val start: Date, val end: Date) {
-    val empty: Boolean
-        get() = start.after(end)
-
-    fun withLaterStart(): DateRange {
-        return withAdjustedStart(1)
+fun LocalDateRange.withAdjustedStart(offset: Int): LocalDateRange {
+    if (this.isEmpty() && offset >= 0) {
+        return this
     }
 
-    fun withEarlierStart(): DateRange {
-        return withAdjustedStart(-1)
-    }
-
-    fun withAdjustedStart(offset: Int): DateRange {
-        if (empty && offset >= 0) {
-            return this
-        }
-
-        val nextDay = Calendar.getInstance().apply {
-            time = start
-            add(Calendar.DAY_OF_YEAR, offset)
-        }.time
-
-        return DateRange(nextDay, end)
-    }
+    val newStart = this.start.plus(offset, DateTimeUnit.DAY)
+    return LocalDateRange(newStart, this.endInclusive)
 }
+
+fun LocalDateRange.withLaterStart(): LocalDateRange = this.withAdjustedStart(1)
+fun LocalDateRange.withEarlierStart(): LocalDateRange = this.withAdjustedStart(-1)
+
+fun LocalDate.format(renderFormat: java.text.DateFormat): String {
+    val date = java.util.Date.from(this.toJavaLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+    return renderFormat.format(date)
+}
+
 // TODO: Turn this into configurable list
 enum class Shift(val displayName: String) {
     MORNING("Frühdienst"),
@@ -56,7 +54,7 @@ enum class Shift(val displayName: String) {
     DAY("Sonderamt"),
 }
 
-data class ShiftEvent(val kind: Shift, val date: Date)
+data class ShiftEvent(val kind: Shift, val date: LocalDate)
 
 // TODO: Add welcome screen
 // TODO: Add settings
@@ -64,10 +62,10 @@ data class ShiftEvent(val kind: Shift, val date: Date)
 sealed class EnteringState {
     object SelectingDateRange : EnteringState()
     data class EnteringShifts(
-        val dateRange: DateRange,
+        val dateRange: LocalDateRange,
         val enteredShifts: List<ShiftEvent> = emptyList(),
     ) : EnteringState() {
-        val currentDate: Date
+        val currentDate: LocalDate
             get() = this.dateRange.start
     }
 
@@ -75,45 +73,39 @@ sealed class EnteringState {
     data class Review(val enteredShifts: List<ShiftEvent>) : EnteringState()
 }
 
+@OptIn(ExperimentalTime::class)
+fun LocalDate.Companion.today(): LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
+
+private const val TAG = "MainActivity"
+
 class MainActivity : ComponentActivity() {
-    companion object {
-        private const val TAG = "MainActivity"
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ShiftPlanImporterTheme {
-                var currentEnteringState by remember { mutableStateOf<EnteringState>(
-                    SelectingDateRange
-                ) }
+                var currentEnteringState by remember {
+                    mutableStateOf<EnteringState>(
+                        SelectingDateRange
+                    )
+                }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (val enteringState = currentEnteringState) {
                         is SelectingDateRange -> {
                             val upcomingMonths = remember {
-                                mutableListOf<Date>().apply {
-                                    val calendar = Calendar.getInstance().apply {
-                                        set(Calendar.DAY_OF_MONTH, 1)
-                                        set(Calendar.HOUR_OF_DAY, 0)
-                                        set(Calendar.MINUTE, 0)
-                                        set(Calendar.SECOND, 0)
-                                        set(Calendar.MILLISECOND, 0)
-                                    }
-                                    repeat(4) {
-                                        add(calendar.time)
-                                        calendar.add(Calendar.MONTH, 1)
-                                    }
-                                }
+                                val start = LocalDate.today().yearMonth
+                                val end = start.plus(4, DateTimeUnit.MONTH)
+                                start..end
                             }
                             TimeFrameView(
                                 modifier = Modifier
                                     .padding(innerPadding)
                                     .fillMaxSize(),
                                 upcomingMonths = upcomingMonths,
-                                onMonthSelected = { dateRange ->
-                                    Log.i(TAG, "Selected date range: $dateRange")
+                                onTimeFrameSelected = { timeFrame ->
+                                    Log.i(TAG, "Selected date range: $timeFrame")
                                     currentEnteringState = EnteringShifts(
-                                        dateRange = dateRange
+                                        dateRange = timeFrame
                                     )
                                 }
                             )
@@ -126,7 +118,7 @@ class MainActivity : ComponentActivity() {
                                 val remainingDays = enteringState.dateRange.withLaterStart()
                                 val enteredShifts = enteringState.enteredShifts + newEvent
 
-                                currentEnteringState = if (remainingDays.empty) {
+                                currentEnteringState = if (remainingDays.isEmpty()) {
                                     Review(
                                         enteredShifts = enteredShifts
                                     )
@@ -143,7 +135,7 @@ class MainActivity : ComponentActivity() {
                             val onSkip: () -> Unit = {
                                 val remainingDays = enteringState.dateRange.withLaterStart()
 
-                                currentEnteringState = if (remainingDays.empty) {
+                                currentEnteringState = if (remainingDays.isEmpty()) {
                                     Review(
                                         enteredShifts = enteringState.enteredShifts
                                     )
@@ -164,7 +156,10 @@ class MainActivity : ComponentActivity() {
                                         enteredShifts = enteringState.enteredShifts.dropLast(1),
                                     )
                                 }
-                                Log.i(TAG, "Returning to previous day from day ${enteringState.currentDate}")
+                                Log.i(
+                                    TAG,
+                                    "Returning to previous day from day ${enteringState.currentDate}"
+                                )
                             }
 
                             EnterShiftView(

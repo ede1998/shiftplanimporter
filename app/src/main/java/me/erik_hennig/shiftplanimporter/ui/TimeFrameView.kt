@@ -14,18 +14,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import me.erik_hennig.shiftplanimporter.DateRange
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateRange
+import kotlinx.datetime.YearMonthProgression
+import kotlinx.datetime.plus
+import kotlinx.datetime.yearMonth
+import me.erik_hennig.shiftplanimporter.format
+import me.erik_hennig.shiftplanimporter.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 @Composable
 fun TimeFrameView(
     modifier: Modifier = Modifier,
-    upcomingMonths: List<Date>,
-    onMonthSelected: (DateRange) -> Unit
+    upcomingMonths: YearMonthProgression,
+    onTimeFrameSelected: (LocalDateRange) -> Unit
 ) {
     val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     Column(
@@ -40,20 +45,12 @@ fun TimeFrameView(
             color = Color.Gray
         )
 
-        upcomingMonths.forEach { date ->
+        upcomingMonths.forEach { month ->
             Button(
-                onClick = {
-                    val calendar = Calendar.getInstance()
-                    calendar.time = date
-                    val endDate = calendar.apply {
-                        set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
-                    }.time
-                    val dateRange = DateRange(start = date, end = endDate)
-                    onMonthSelected(dateRange)
-                },
+                onClick = { onTimeFrameSelected(month.firstDay..month.lastDay) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = monthFormat.format(date))
+                Text(text = month.firstDay.format(monthFormat))
             }
         }
 
@@ -70,14 +67,11 @@ fun TimeFrameView(
 @Preview(showBackground = true)
 @Composable
 fun TimeFrameViewPreview() {
-    val upcomingMonths = mutableListOf<Date>()
-    val calendar = Calendar.getInstance()
+    val start = LocalDate.today().yearMonth
+    val end = start.plus(4, DateTimeUnit.MONTH)
+    val upcomingMonths = start..end
 
-    for (i in 0..3) {
-        upcomingMonths.add(calendar.time)
-        calendar.add(Calendar.MONTH, 1)
-    }
     ShiftPlanImporterTheme {
-        TimeFrameView(upcomingMonths = upcomingMonths, onMonthSelected = {})
+        TimeFrameView(upcomingMonths = upcomingMonths, onTimeFrameSelected = {})
     }
 }

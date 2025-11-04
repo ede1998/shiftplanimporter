@@ -15,23 +15,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.datetime.LocalDate
 import me.erik_hennig.shiftplanimporter.Shift
+import me.erik_hennig.shiftplanimporter.format
+import me.erik_hennig.shiftplanimporter.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @Composable
 fun EnterShiftView(
     modifier: Modifier = Modifier,
-    date: Date,
+    date: LocalDate,
     shiftOptions: List<Shift>,
     onShiftSelected: (Shift) -> Unit,
     onUndo: () -> Unit,
     onSkip: () -> Unit
 ) {
     val dateFormat = SimpleDateFormat("EEEE, dd.MM.yyyy", Locale.getDefault())
-    val currentDate = dateFormat.format(date)
+    val currentDate = date.format(dateFormat)
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -71,7 +73,7 @@ fun EnterShiftView(
 fun EnterShiftViewPreview() {
     ShiftPlanImporterTheme {
         EnterShiftView(
-            date = Date(),
+            date = LocalDate.today(),
             shiftOptions = Shift.entries,
             onShiftSelected = {},
             onUndo = {},
