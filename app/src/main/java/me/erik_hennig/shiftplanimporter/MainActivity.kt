@@ -48,7 +48,7 @@ data class DateRange(val start: Date, val end: Date) {
         return DateRange(nextDay, end)
     }
 }
-
+// TODO: Turn this into configurable list
 enum class Shift(val displayName: String) {
     MORNING("Frühdienst"),
     EVENING("Spätdienst"),
@@ -58,6 +58,9 @@ enum class Shift(val displayName: String) {
 
 data class ShiftEvent(val kind: Shift, val date: Date)
 
+// TODO: Add welcome screen
+// TODO: Add settings
+// TODO: Export events to calendar
 sealed class EnteringState {
     object SelectingDateRange : EnteringState()
     data class EnteringShifts(
@@ -68,6 +71,7 @@ sealed class EnteringState {
             get() = this.dateRange.start
     }
 
+    // TODO: make review screen
     data class Review(val enteredShifts: List<ShiftEvent>) : EnteringState()
 }
 
@@ -182,32 +186,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MainActivityPreview() {
-    ShiftPlanImporterTheme {
-        val upcomingMonths = remember {
-            mutableListOf<Date>().apply {
-                val calendar = Calendar.getInstance()
-                calendar.set(Calendar.DAY_OF_MONTH, 1)
-                repeat(4) {
-                    add(calendar.time)
-                    calendar.add(Calendar.MONTH, 1)
-                }
-            }
-        }
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            TimeFrameView(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-                upcomingMonths = upcomingMonths,
-                onMonthSelected = {}
-            )
         }
     }
 }
