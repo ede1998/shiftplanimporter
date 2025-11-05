@@ -54,6 +54,11 @@ fun EnterShiftView(
                 Text(text = shift.displayName)
             }
         }
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            thickness = 2.dp,
+            color = Color.Gray
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly

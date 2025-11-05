@@ -20,6 +20,7 @@ import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.EnteringState.*
 import me.erik_hennig.shiftplanimporter.ui.EnterShiftView
+import me.erik_hennig.shiftplanimporter.ui.ReviewView
 import me.erik_hennig.shiftplanimporter.ui.TimeFrameView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import kotlinx.datetime.plus
@@ -69,7 +70,6 @@ sealed class EnteringState {
             get() = this.dateRange.start
     }
 
-    // TODO: make review screen
     data class Review(val enteredShifts: List<ShiftEvent>) : EnteringState()
 }
 
@@ -175,8 +175,30 @@ class MainActivity : ComponentActivity() {
                         }
 
                         is Review -> {
-                            Log.i(TAG, "Shifts: ${enteringState.enteredShifts}")
-                            currentEnteringState = SelectingDateRange
+                            ReviewView(
+                                modifier = Modifier
+                                    .padding(innerPadding)
+                                    .fillMaxSize(),
+                                shiftEvents = enteringState.enteredShifts,
+                                onEdit = {
+                                    // TODO: Implement edit
+                                    Log.i(TAG, "Editing shift: ${enteringState.enteredShifts[it]}")
+                                },
+                                onDiscardAll = {
+                                    Log.i(TAG, "Discarding shift selection")
+                                    currentEnteringState = SelectingDateRange
+                                },
+                                onImportAll = {
+                                    // TODO: Implement import
+                                    Log.i(TAG, "Importing shift selection")
+                                    currentEnteringState = SelectingDateRange
+                                },
+                                onExportAll = {
+                                    // TODO: Implement export
+                                    Log.i(TAG, "Exporting shift selection")
+                                    currentEnteringState = SelectingDateRange
+                                }
+                            )
                         }
                     }
                 }
