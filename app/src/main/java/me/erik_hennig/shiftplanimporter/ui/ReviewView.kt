@@ -23,10 +23,10 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
-import me.erik_hennig.shiftplanimporter.Shift
-import me.erik_hennig.shiftplanimporter.ShiftEvent
-import me.erik_hennig.shiftplanimporter.format
-import me.erik_hennig.shiftplanimporter.today
+import me.erik_hennig.shiftplanimporter.data.Shift
+import me.erik_hennig.shiftplanimporter.data.ShiftEvent
+import me.erik_hennig.shiftplanimporter.extensions.format
+import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
 import java.util.Locale

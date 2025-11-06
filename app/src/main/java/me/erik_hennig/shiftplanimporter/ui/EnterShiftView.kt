@@ -16,9 +16,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
-import me.erik_hennig.shiftplanimporter.Shift
-import me.erik_hennig.shiftplanimporter.format
-import me.erik_hennig.shiftplanimporter.today
+import me.erik_hennig.shiftplanimporter.data.Shift
+import me.erik_hennig.shiftplanimporter.extensions.format
+import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
 import java.util.Locale

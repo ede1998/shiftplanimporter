@@ -20,8 +20,8 @@ import kotlinx.datetime.LocalDateRange
 import kotlinx.datetime.YearMonthProgression
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
-import me.erik_hennig.shiftplanimporter.format
-import me.erik_hennig.shiftplanimporter.today
+import me.erik_hennig.shiftplanimporter.extensions.format
+import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import java.text.SimpleDateFormat
 import java.util.Locale
