@@ -21,22 +21,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateRange
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.yearMonth
-import me.erik_hennig.shiftplanimporter.EnteringState.*
+import me.erik_hennig.shiftplanimporter.EnteringState.EnteringShifts
+import me.erik_hennig.shiftplanimporter.EnteringState.Review
+import me.erik_hennig.shiftplanimporter.EnteringState.SelectingDateRange
 import me.erik_hennig.shiftplanimporter.ui.EnterShiftView
 import me.erik_hennig.shiftplanimporter.ui.ReviewView
 import me.erik_hennig.shiftplanimporter.ui.TimeFrameView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import kotlinx.datetime.plus
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toJavaLocalDate
 import java.time.ZoneId
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -54,7 +56,9 @@ fun LocalDateRange.withLaterStart(): LocalDateRange = this.withAdjustedStart(1)
 fun LocalDateRange.withEarlierStart(): LocalDateRange = this.withAdjustedStart(-1)
 
 fun LocalDate.format(renderFormat: java.text.DateFormat): String {
-    val date = java.util.Date.from(this.toJavaLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant())
+    val date = java.util.Date.from(
+        this.toJavaLocalDate().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant()
+    )
     return renderFormat.format(date)
 }
 
@@ -117,7 +121,11 @@ class MainActivity : ComponentActivity() {
                                 currentEnteringState = SelectingDateRange
                             }
                         } else {
-                            Toast.makeText(this, "Calendar permissions are required to import shifts.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this,
+                                "Calendar permissions are required to import shifts.",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     }
 
@@ -223,7 +231,10 @@ class MainActivity : ComponentActivity() {
                                 onImportAll = {
                                     Log.i(TAG, "Importing shift selection")
                                     val allPermissionsGranted = calendarPermissions.all {
-                                        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+                                        ContextCompat.checkSelfPermission(
+                                            this,
+                                            it
+                                        ) == PackageManager.PERMISSION_GRANTED
                                     }
                                     if (allPermissionsGranted) {
                                         importShiftsToCalendar(enteringState.enteredShifts)
@@ -255,9 +266,16 @@ class MainActivity : ComponentActivity() {
         try {
             // Get primary calendar ID
             val projection = arrayOf(CalendarContract.Calendars._ID)
-            val selection = "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.IS_PRIMARY} = ?"
+            val selection =
+                "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.IS_PRIMARY} = ?"
             var calendarId: Long? = null
-            contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, selection, arrayOf("1", "1"), null)?.use { cursor ->
+            contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                projection,
+                selection,
+                arrayOf("1", "1"),
+                null
+            )?.use { cursor ->
                 if (cursor.moveToFirst()) {
                     calendarId = cursor.getLong(0)
                 }
@@ -265,7 +283,13 @@ class MainActivity : ComponentActivity() {
 
             // Fallback to first visible calendar if no primary is found
             if (calendarId == null) {
-                contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, "${CalendarContract.Calendars.VISIBLE} = ?", arrayOf("1"), null)?.use { cursor ->
+                contentResolver.query(
+                    CalendarContract.Calendars.CONTENT_URI,
+                    projection,
+                    "${CalendarContract.Calendars.VISIBLE} = ?",
+                    arrayOf("1"),
+                    null
+                )?.use { cursor ->
                     if (cursor.moveToFirst()) {
                         calendarId = cursor.getLong(0)
                     }
@@ -274,7 +298,8 @@ class MainActivity : ComponentActivity() {
 
             if (calendarId == null) {
                 Log.e(TAG, "No writable calendar found.")
-                Toast.makeText(this, "No calendar found to import shifts into", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "No calendar found to import shifts into", Toast.LENGTH_LONG)
+                    .show()
                 return
             }
 
@@ -307,7 +332,8 @@ class MainActivity : ComponentActivity() {
                 contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
             }
             Log.i(TAG, "Successfully imported ${shifts.size} shifts.")
-            Toast.makeText(this, "Successfully imported ${shifts.size} shifts", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Successfully imported ${shifts.size} shifts", Toast.LENGTH_SHORT)
+                .show()
         } catch (e: SecurityException) {
             Log.e(TAG, "Permission denied for calendar access.", e)
             Toast.makeText(this, "Calendar permission denied", Toast.LENGTH_LONG).show()
