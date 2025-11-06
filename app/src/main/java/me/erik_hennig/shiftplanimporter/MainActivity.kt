@@ -1,10 +1,17 @@
 package me.erik_hennig.shiftplanimporter
 
+import android.Manifest
+import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.CalendarContract
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateRange
 import kotlinx.datetime.TimeZone
@@ -25,6 +33,9 @@ import me.erik_hennig.shiftplanimporter.ui.TimeFrameView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 import kotlinx.datetime.plus
 import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toJavaLocalDate
 import java.time.ZoneId
 import kotlin.time.Clock
@@ -59,7 +70,6 @@ data class ShiftEvent(val kind: Shift, val date: LocalDate)
 
 // TODO: Add welcome screen
 // TODO: Add settings
-// TODO: Export events to calendar
 sealed class EnteringState {
     object SelectingDateRange : EnteringState()
     data class EnteringShifts(
@@ -79,6 +89,12 @@ fun LocalDate.Companion.today(): LocalDate = Clock.System.todayIn(TimeZone.curre
 private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
+
+    private val calendarPermissions = arrayOf(
+        Manifest.permission.READ_CALENDAR,
+        Manifest.permission.WRITE_CALENDAR
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -89,6 +105,22 @@ class MainActivity : ComponentActivity() {
                         SelectingDateRange
                     )
                 }
+
+                val requestPermissionLauncher =
+                    rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestMultiplePermissions()
+                    ) { permissions ->
+                        Log.i(TAG, "Permission request result: $permissions")
+                        if (permissions.values.all { it }) {
+                            (currentEnteringState as? Review)?.enteredShifts?.let {
+                                importShiftsToCalendar(it)
+                                currentEnteringState = SelectingDateRange
+                            }
+                        } else {
+                            Toast.makeText(this, "Calendar permissions are required to import shifts.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (val enteringState = currentEnteringState) {
                         is SelectingDateRange -> {
@@ -189,9 +221,17 @@ class MainActivity : ComponentActivity() {
                                     currentEnteringState = SelectingDateRange
                                 },
                                 onImportAll = {
-                                    // TODO: Implement import
                                     Log.i(TAG, "Importing shift selection")
-                                    currentEnteringState = SelectingDateRange
+                                    val allPermissionsGranted = calendarPermissions.all {
+                                        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+                                    }
+                                    if (allPermissionsGranted) {
+                                        importShiftsToCalendar(enteringState.enteredShifts)
+                                        currentEnteringState = SelectingDateRange
+                                    } else {
+                                        Log.d(TAG, "Requesting missing permissions")
+                                        requestPermissionLauncher.launch(calendarPermissions)
+                                    }
                                 },
                                 onExportAll = {
                                     // TODO: Implement export
@@ -203,6 +243,74 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Imports the given list of shift events into the user's primary calendar.
+     * Note: This function requires the WRITE_CALENDAR and READ_CALENDAR permissions.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun importShiftsToCalendar(shifts: List<ShiftEvent>) {
+        try {
+            // Get primary calendar ID
+            val projection = arrayOf(CalendarContract.Calendars._ID)
+            val selection = "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.IS_PRIMARY} = ?"
+            var calendarId: Long? = null
+            contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, selection, arrayOf("1", "1"), null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    calendarId = cursor.getLong(0)
+                }
+            }
+
+            // Fallback to first visible calendar if no primary is found
+            if (calendarId == null) {
+                contentResolver.query(CalendarContract.Calendars.CONTENT_URI, projection, "${CalendarContract.Calendars.VISIBLE} = ?", arrayOf("1"), null)?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        calendarId = cursor.getLong(0)
+                    }
+                }
+            }
+
+            if (calendarId == null) {
+                Log.e(TAG, "No writable calendar found.")
+                Toast.makeText(this, "No calendar found to import shifts into", Toast.LENGTH_LONG).show()
+                return
+            }
+
+            val zone = TimeZone.currentSystemDefault()
+            for (shiftEvent in shifts) {
+                val (startTime, endTime) = when (shiftEvent.kind) {
+                    Shift.MORNING -> LocalTime(6, 0) to LocalTime(14, 0)
+                    Shift.EVENING -> LocalTime(14, 0) to LocalTime(22, 0)
+                    Shift.NIGHT -> LocalTime(22, 0) to LocalTime(6, 0)
+                    Shift.DAY -> LocalTime(9, 0) to LocalTime(17, 0)
+                }
+
+                val startLocalDateTime = LocalDateTime(shiftEvent.date, startTime)
+                val endLocalDateTime = if (shiftEvent.kind == Shift.NIGHT) {
+                    LocalDateTime(shiftEvent.date.plus(1, DateTimeUnit.DAY), endTime)
+                } else {
+                    LocalDateTime(shiftEvent.date, endTime)
+                }
+
+                val startMillis = startLocalDateTime.toInstant(zone).toEpochMilliseconds()
+                val endMillis = endLocalDateTime.toInstant(zone).toEpochMilliseconds()
+
+                val values = ContentValues().apply {
+                    put(CalendarContract.Events.DTSTART, startMillis)
+                    put(CalendarContract.Events.DTEND, endMillis)
+                    put(CalendarContract.Events.TITLE, shiftEvent.kind.displayName)
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
+                }
+                contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+            }
+            Log.i(TAG, "Successfully imported ${shifts.size} shifts.")
+            Toast.makeText(this, "Successfully imported ${shifts.size} shifts", Toast.LENGTH_SHORT).show()
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied for calendar access.", e)
+            Toast.makeText(this, "Calendar permission denied", Toast.LENGTH_LONG).show()
         }
     }
 }
