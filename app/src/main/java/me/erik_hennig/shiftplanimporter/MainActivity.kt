@@ -1,6 +1,7 @@
 package me.erik_hennig.shiftplanimporter
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -98,6 +99,7 @@ private fun ShiftPlanImporterApp() {
 
 @Composable
 private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (EnteringState) -> Unit) {
+    val context = LocalContext.current
     val upcomingMonths = remember {
         val start = LocalDate.today().yearMonth
         val end = start.plus(4, DateTimeUnit.MONTH)
@@ -113,6 +115,9 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
                     dateRange = timeFrame
                 )
             )
+        },
+        onConfigureTemplates = {
+            context.startActivity(Intent(context, SettingsActivity::class.java))
         }
     )
 }

@@ -21,18 +21,17 @@ import kotlinx.datetime.YearMonthProgression
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.extensions.format
+import me.erik_hennig.shiftplanimporter.extensions.monthOnlyFormat
 import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 @Composable
 fun TimeFrameView(
     modifier: Modifier = Modifier,
     upcomingMonths: YearMonthProgression,
-    onTimeFrameSelected: (LocalDateRange) -> Unit
+    onTimeFrameSelected: (LocalDateRange) -> Unit,
+    onConfigureTemplates: () -> Unit
 ) {
-    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
     Column(
         modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -40,9 +39,7 @@ fun TimeFrameView(
     ) {
         Text(text = "Select Time Frame", style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 2.dp,
-            color = Color.Gray
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
 
         upcomingMonths.forEach { month ->
@@ -50,7 +47,7 @@ fun TimeFrameView(
                 onClick = { onTimeFrameSelected(month.firstDay..month.lastDay) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = month.firstDay.format(monthFormat))
+                Text(text = month.firstDay.format(monthOnlyFormat()))
             }
         }
 
@@ -60,6 +57,16 @@ fun TimeFrameView(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = "Select Custom Range (Not implemented yet)")
+        }
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
+        )
+
+        Button(
+            onClick = onConfigureTemplates, modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = "Configure Templates")
         }
     }
 }
@@ -72,6 +79,9 @@ fun TimeFrameViewPreview() {
     val upcomingMonths = start..end
 
     ShiftPlanImporterTheme {
-        TimeFrameView(upcomingMonths = upcomingMonths, onTimeFrameSelected = {})
+        TimeFrameView(
+            upcomingMonths = upcomingMonths,
+            onTimeFrameSelected = {},
+            onConfigureTemplates = {})
     }
 }

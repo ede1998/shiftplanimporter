@@ -25,11 +25,12 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
 import me.erik_hennig.shiftplanimporter.data.Shift
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
+import me.erik_hennig.shiftplanimporter.extensions.dateOnlyFormat
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.today
+import me.erik_hennig.shiftplanimporter.extensions.weekDayOnlyFormat
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import java.text.SimpleDateFormat
-import java.util.Locale
+
 
 @Composable
 fun ReviewView(
@@ -47,13 +48,10 @@ fun ReviewView(
     ) {
         Text(text = "Review Shifts", style = MaterialTheme.typography.headlineMedium)
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 2.dp,
-            color = Color.Gray
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
         LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             itemsIndexed(shiftEvents) { index, event ->
                 Row(
@@ -65,12 +63,10 @@ fun ReviewView(
                         )
                         .clickable { onEdit(index) }
                         .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val dateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-                    val weekDayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-                    val date = event.date.format(dateFormat)
-                    val weekDay = event.date.format(weekDayFormat)
+                    verticalAlignment = Alignment.CenterVertically) {
+
+                    val date = event.date.format(dateOnlyFormat())
+                    val weekDay = event.date.format(weekDayOnlyFormat())
                     Text(text = weekDay, modifier = Modifier.weight(1f))
                     Text(text = date, modifier = Modifier.weight(1.5f))
                     Text(text = event.kind.displayName, modifier = Modifier.weight(1f))
@@ -78,13 +74,10 @@ fun ReviewView(
             }
         }
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 2.dp,
-            color = Color.Gray
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(onClick = onDiscardAll) {
                 Text(text = "Discard All")
@@ -130,7 +123,6 @@ fun ReviewViewPreview() {
             onEdit = {},
             onDiscardAll = {},
             onImportAll = {},
-            onExportAll = {}
-        )
+            onExportAll = {})
     }
 }

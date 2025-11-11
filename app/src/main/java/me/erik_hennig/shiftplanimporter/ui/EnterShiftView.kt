@@ -17,11 +17,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
 import me.erik_hennig.shiftplanimporter.data.Shift
+import me.erik_hennig.shiftplanimporter.extensions.dateAndWeekDayFormat
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 @Composable
 fun EnterShiftView(
@@ -32,8 +31,7 @@ fun EnterShiftView(
     onUndo: () -> Unit,
     onSkip: () -> Unit
 ) {
-    val dateFormat = SimpleDateFormat("EEEE, dd.MM.yyyy", Locale.getDefault())
-    val currentDate = date.format(dateFormat)
+    val currentDate = date.format(dateAndWeekDayFormat())
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -42,26 +40,20 @@ fun EnterShiftView(
     ) {
         Text(text = currentDate, fontSize = 24.sp)
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 2.dp,
-            color = Color.Gray
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
         shiftOptions.forEach { shift ->
             Button(
-                onClick = { onShiftSelected(shift) },
-                modifier = Modifier.fillMaxWidth()
+                onClick = { onShiftSelected(shift) }, modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = shift.displayName)
             }
         }
         HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 2.dp,
-            color = Color.Gray
+            modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(onClick = onUndo) {
                 Text(text = "Undo")
@@ -82,7 +74,6 @@ fun EnterShiftViewPreview() {
             shiftOptions = Shift.entries,
             onShiftSelected = {},
             onUndo = {},
-            onSkip = {}
-        )
+            onSkip = {})
     }
 }
