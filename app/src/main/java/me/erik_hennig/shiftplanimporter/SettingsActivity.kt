@@ -22,24 +22,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.datetime.LocalTime
+import kotlinx.coroutines.launch
 import me.erik_hennig.shiftplanimporter.data.CalendarInfo
+import me.erik_hennig.shiftplanimporter.data.SettingsRepository
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
-import me.erik_hennig.shiftplanimporter.data.ShiftTimes
 import me.erik_hennig.shiftplanimporter.extensions.formatDefault
 import me.erik_hennig.shiftplanimporter.ui.TemplateConfigurationView
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 class SettingsActivity : ComponentActivity() {
@@ -48,29 +48,43 @@ class SettingsActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ShiftPlanImporterTheme {
+                val context = LocalContext.current
+                val settings = remember { SettingsRepository(context) }
                 val navController = rememberNavController()
                 val calendars = listOf(CalendarInfo(1, "Personal"), CalendarInfo(2, "Work"))
+                val coroutineScope = rememberCoroutineScope()
+                val templates by settings.templates.collectAsState(
+                    emptyList(), coroutineScope.coroutineContext
+                )
+
                 NavHost(navController = navController, startDestination = "template_list") {
                     composable("template_list") {
                         TemplateListScreen(
+                            templates = templates,
                             onAddTemplate = { navController.navigate("template_configuration") },
-                            onEditTemplate = { navController.navigate("template_configuration/$it") })
+                            onEditTemplate = { navController.navigate("template_configuration/$it") },
+                            onDeleteTemplate = { coroutineScope.launch { settings.removeTemplate(it) } },
+                        )
                     }
                     composable("template_configuration") {
                         TemplateConfigurationView(
                             calendars = calendars,
                             initialTemplate = null,
-                            onSave = { navController.popBackStack() },
+                            onSave = {
+                                coroutineScope.launch { settings.addOrUpdateTemplate(it) }
+                                navController.popBackStack()
+                            },
                             onCancel = { navController.popBackStack() })
                     }
                     composable("template_configuration/{templateId}") { backStackEntry ->
                         val id = backStackEntry.arguments?.getString("templateId")
-                        val template = DUMMY_TEMPLATES.find { it.id == id }
-                        // In a real app, you would load the template from your data source here.
                         TemplateConfigurationView(
                             calendars = calendars,
-                            initialTemplate = template,
-                            onSave = { navController.popBackStack() },
+                            initialTemplate = templates.find { it.id == id },
+                            onSave = {
+                                coroutineScope.launch { settings.addOrUpdateTemplate(it) }
+                                navController.popBackStack()
+                            },
                             onCancel = { navController.popBackStack() })
                     }
                 }
@@ -79,32 +93,14 @@ class SettingsActivity : ComponentActivity() {
     }
 }
 
-val DUMMY_TEMPLATES: List<ShiftTemplate> = listOf(
-    ShiftTemplate(
-        id = UUID.randomUUID().toString(),
-        summary = "Early Shift",
-        description = "Morning shift from 9 to 5",
-        times = ShiftTimes(LocalTime(9, 0), LocalTime(17, 0)),
-    ), ShiftTemplate(
-        id = UUID.randomUUID().toString(),
-        summary = "Late Shift",
-        description = "Evening shift from 5 to 1",
-        times = ShiftTimes(LocalTime(17, 0), LocalTime(1, 0)),
-    ), ShiftTemplate(
-        id = UUID.randomUUID().toString(),
-        summary = "All Day Event",
-        description = "An all day event",
-        times = null
-    )
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplateListScreen(
-    onAddTemplate: () -> Unit, onEditTemplate: (String) -> Unit
+    templates: List<ShiftTemplate>,
+    onAddTemplate: () -> Unit,
+    onEditTemplate: (String) -> Unit,
+    onDeleteTemplate: (ShiftTemplate) -> Unit
 ) {
-    var templates by remember { mutableStateOf(DUMMY_TEMPLATES) }
-
     Scaffold(topBar = { TopAppBar(title = { Text("Shift Templates") }) }, floatingActionButton = {
         FloatingActionButton(onClick = onAddTemplate) {
             Icon(Icons.Default.Add, contentDescription = "Add new template")
@@ -131,9 +127,7 @@ fun TemplateListScreen(
                     IconButton(onClick = { onEditTemplate(template.id) }) {
                         Icon(Icons.Default.Edit, contentDescription = "Edit template")
                     }
-                    IconButton(onClick = {
-                        templates = templates.filter { it.id != template.id }
-                    }) {
+                    IconButton(onClick = { onDeleteTemplate(template) }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete template")
                     }
                 }
