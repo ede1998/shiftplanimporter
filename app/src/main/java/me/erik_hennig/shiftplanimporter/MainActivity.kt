@@ -210,6 +210,7 @@ private fun ReviewScreen(
         shiftEvents = enteringState.enteredShifts,
         onEdit = {
             // TODO: Implement edit
+            Toast.makeText(context, "Editing not yet implemented",Toast.LENGTH_LONG).show()
             Log.i(TAG, "Editing shift: ${enteringState.enteredShifts[it]}")
         },
         onDiscardAll = {
