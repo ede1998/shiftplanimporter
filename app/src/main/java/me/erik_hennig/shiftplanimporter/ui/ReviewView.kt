@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
-import me.erik_hennig.shiftplanimporter.data.Shift
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
+import me.erik_hennig.shiftplanimporter.data.templateExamples
 import me.erik_hennig.shiftplanimporter.extensions.dateOnlyFormat
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.today
@@ -69,7 +69,7 @@ fun ReviewView(
                     val weekDay = event.date.format(weekDayOnlyFormat())
                     Text(text = weekDay, modifier = Modifier.weight(1f))
                     Text(text = date, modifier = Modifier.weight(1.5f))
-                    Text(text = event.kind.displayName, modifier = Modifier.weight(1f))
+                    Text(text = event.template.summary, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -96,26 +96,26 @@ fun ReviewView(
 @Composable
 fun ReviewViewPreview() {
     val shiftEvents = listOf(
-        ShiftEvent(Shift.MORNING, LocalDate.today()),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(1, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(2, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(3, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(4, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(6, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(7, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(8, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(9, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.MORNING, LocalDate.today().plus(10, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.DAY, LocalDate.today().plus(11, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.MORNING, LocalDate.today().plus(12, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(13, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(14, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.DAY, LocalDate.today().plus(15, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.MORNING, LocalDate.today().plus(16, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.EVENING, LocalDate.today().plus(17, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.NIGHT, LocalDate.today().plus(18, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.DAY, LocalDate.today().plus(19, DateTimeUnit.DAY)),
-        ShiftEvent(Shift.MORNING, LocalDate.today().plus(20, DateTimeUnit.DAY))
+        ShiftEvent(templateExamples[0], LocalDate.today()),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(1, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(2, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(3, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(4, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(6, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(7, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(8, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(9, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[0], LocalDate.today().plus(10, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[3], LocalDate.today().plus(11, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[0], LocalDate.today().plus(12, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(13, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(14, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[3], LocalDate.today().plus(15, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[0], LocalDate.today().plus(16, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[1], LocalDate.today().plus(17, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[2], LocalDate.today().plus(18, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[3], LocalDate.today().plus(19, DateTimeUnit.DAY)),
+        ShiftEvent(templateExamples[0], LocalDate.today().plus(20, DateTimeUnit.DAY))
     )
     ShiftPlanImporterTheme {
         ReviewView(

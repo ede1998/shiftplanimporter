@@ -16,7 +16,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
-import me.erik_hennig.shiftplanimporter.data.Shift
+import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
+import me.erik_hennig.shiftplanimporter.data.templateExamples
 import me.erik_hennig.shiftplanimporter.extensions.dateAndWeekDayFormat
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.today
@@ -26,8 +27,8 @@ import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 fun EnterShiftView(
     modifier: Modifier = Modifier,
     date: LocalDate,
-    shiftOptions: List<Shift>,
-    onShiftSelected: (Shift) -> Unit,
+    templates: List<ShiftTemplate>,
+    onShiftSelected: (ShiftTemplate) -> Unit,
     onUndo: () -> Unit,
     onSkip: () -> Unit
 ) {
@@ -42,11 +43,11 @@ fun EnterShiftView(
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
-        shiftOptions.forEach { shift ->
+        templates.forEach { shift ->
             Button(
                 onClick = { onShiftSelected(shift) }, modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = shift.displayName)
+                Text(text = shift.summary)
             }
         }
         HorizontalDivider(
@@ -71,7 +72,7 @@ fun EnterShiftViewPreview() {
     ShiftPlanImporterTheme {
         EnterShiftView(
             date = LocalDate.today(),
-            shiftOptions = Shift.entries,
+            templates = templateExamples,
             onShiftSelected = {},
             onUndo = {},
             onSkip = {})

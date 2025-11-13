@@ -7,11 +7,10 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
-import me.erik_hennig.shiftplanimporter.data.Shift
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
 import kotlin.time.ExperimentalTime
 
@@ -30,11 +29,7 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
             "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.IS_PRIMARY} = ?"
         var calendarId: Long? = null
         context.contentResolver.query(
-            CalendarContract.Calendars.CONTENT_URI,
-            projection,
-            selection,
-            arrayOf("1", "1"),
-            null
+            CalendarContract.Calendars.CONTENT_URI, projection, selection, arrayOf("1", "1"), null
         )?.use { cursor ->
             if (cursor.moveToFirst()) {
                 calendarId = cursor.getLong(0)
@@ -64,30 +59,45 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
         }
 
         val zone = TimeZone.currentSystemDefault()
+
         for (shiftEvent in shifts) {
-            val (startTime, endTime) = when (shiftEvent.kind) {
-                Shift.MORNING -> LocalTime(6, 0) to LocalTime(14, 0)
-                Shift.EVENING -> LocalTime(14, 0) to LocalTime(22, 0)
-                Shift.NIGHT -> LocalTime(22, 0) to LocalTime(6, 0)
-                Shift.DAY -> LocalTime(9, 0) to LocalTime(17, 0)
-            }
-
-            val startLocalDateTime = LocalDateTime(shiftEvent.date, startTime)
-            val endLocalDateTime = if (shiftEvent.kind == Shift.NIGHT) {
-                LocalDateTime(shiftEvent.date.plus(1, DateTimeUnit.DAY), endTime)
-            } else {
-                LocalDateTime(shiftEvent.date, endTime)
-            }
-
-            val startMillis = startLocalDateTime.toInstant(zone).toEpochMilliseconds()
-            val endMillis = endLocalDateTime.toInstant(zone).toEpochMilliseconds()
-
             val values = ContentValues().apply {
-                put(CalendarContract.Events.DTSTART, startMillis)
-                put(CalendarContract.Events.DTEND, endMillis)
-                put(CalendarContract.Events.TITLE, shiftEvent.kind.displayName)
-                put(CalendarContract.Events.CALENDAR_ID, calendarId)
-                put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
+                shiftEvent.template.let {
+                    put(CalendarContract.Events.TITLE, it.summary)
+                    put(CalendarContract.Events.DESCRIPTION, it.description)
+                    // TODO: use correct calendar
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
+
+                    when (it.times) {
+                        null -> {
+                            val day = shiftEvent.date.atStartOfDayIn(zone)
+                            // TODO: fix properly even with different time zones
+                            // ugly workaround to make all day event show in correct day
+                            val halfADay = 12 * 3600 * 1000
+                            val dayMillis = day.toEpochMilliseconds() + halfADay
+
+                            Log.i(TAG, "Start of day $day")
+
+                            put(CalendarContract.Events.ALL_DAY, 1)
+                            put(CalendarContract.Events.DTSTART, dayMillis)
+                            put(CalendarContract.Events.DTEND, dayMillis)
+                        }
+                        else -> {
+                            val start = LocalDateTime(shiftEvent.date, it.times.start)
+                            val overnight = if (it.times.start < it.times.end) { 0 } else { 1 }
+                            val end = LocalDateTime(
+                                shiftEvent.date.plus(overnight, DateTimeUnit.DAY),
+                                it.times.end
+                            )
+
+                            val startMillis = start.toInstant(zone).toEpochMilliseconds()
+                            val endMillis = end.toInstant(zone).toEpochMilliseconds()
+                            put(CalendarContract.Events.DTSTART, startMillis)
+                            put(CalendarContract.Events.DTEND, endMillis)
+                        }
+                    }
+                }
             }
             context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
         }

@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,8 +30,9 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.calendar.importShiftsToCalendar
-import me.erik_hennig.shiftplanimporter.data.Shift
+import me.erik_hennig.shiftplanimporter.data.SettingsRepository
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
+import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.extensions.withEarlierStart
 import me.erik_hennig.shiftplanimporter.extensions.withLaterStart
@@ -45,8 +48,7 @@ import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 private const val TAG = "MainActivity"
 
 private val CALENDAR_PERMISSIONS = arrayOf(
-    Manifest.permission.READ_CALENDAR,
-    Manifest.permission.WRITE_CALENDAR
+    Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR
 )
 
 class MainActivity : ComponentActivity() {
@@ -62,27 +64,34 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun ShiftPlanImporterApp() {
     ShiftPlanImporterTheme {
+        val context = LocalContext.current
+        val settings = remember { SettingsRepository(context) }
+        val coroutineScope = rememberCoroutineScope()
         var currentEnteringState by remember {
             mutableStateOf<EnteringState>(
                 SelectingDateRange
             )
         }
 
+        val templates by settings.templates.collectAsState(
+            emptyList(),
+            coroutineScope.coroutineContext
+        )
+
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (val enteringState = currentEnteringState) {
                 is SelectingDateRange -> {
                     TimeFrameScreen(
                         modifier = Modifier.padding(innerPadding),
-                        onStateChange = { currentEnteringState = it }
-                    )
+                        onStateChange = { currentEnteringState = it })
                 }
 
                 is EnteringShifts -> {
                     EnterShiftScreen(
                         modifier = Modifier.padding(innerPadding),
                         enteringState = enteringState,
-                        onStateChange = { currentEnteringState = it }
-                    )
+                        templates = templates,
+                        onStateChange = { currentEnteringState = it })
                 }
 
                 is Review -> {
@@ -118,18 +127,18 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
         },
         onConfigureTemplates = {
             context.startActivity(Intent(context, SettingsActivity::class.java))
-        }
-    )
+        })
 }
 
 @Composable
 private fun EnterShiftScreen(
     modifier: Modifier = Modifier,
     enteringState: EnteringShifts,
+    templates: List<ShiftTemplate>,
     onStateChange: (EnteringState) -> Unit
 ) {
-    val onShiftSelected: (Shift) -> Unit = { shift: Shift ->
-        val newEvent = ShiftEvent(kind = shift, date = enteringState.currentDate)
+    val onShiftSelected: (ShiftTemplate) -> Unit = {
+        val newEvent = ShiftEvent(template = it, date = enteringState.currentDate)
         val remainingDays = enteringState.dateRange.withLaterStart()
         val enteredShifts = enteringState.enteredShifts + newEvent
 
@@ -176,7 +185,7 @@ private fun EnterShiftScreen(
     EnterShiftView(
         modifier = modifier.fillMaxSize(),
         date = enteringState.currentDate,
-        shiftOptions = Shift.entries,
+        templates = templates,
         onShiftSelected = onShiftSelected,
         onUndo = onUndo,
         onSkip = onSkip
@@ -210,7 +219,7 @@ private fun ReviewScreen(
         shiftEvents = enteringState.enteredShifts,
         onEdit = {
             // TODO: Implement edit
-            Toast.makeText(context, "Editing not yet implemented",Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "Editing not yet implemented", Toast.LENGTH_LONG).show()
             Log.i(TAG, "Editing shift: ${enteringState.enteredShifts[it]}")
         },
         onDiscardAll = {
@@ -236,6 +245,5 @@ private fun ReviewScreen(
             // TODO: Implement export
             Log.i(TAG, "Exporting shift selection")
             onStateChange(SelectingDateRange)
-        }
-    )
+        })
 }
