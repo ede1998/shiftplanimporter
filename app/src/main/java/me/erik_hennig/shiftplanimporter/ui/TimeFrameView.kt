@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
@@ -31,6 +32,7 @@ import kotlinx.datetime.YearMonthProgression
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
+import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.monthOnlyFormat
 import me.erik_hennig.shiftplanimporter.extensions.today
@@ -58,7 +60,10 @@ fun TimeFrameView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(text = "Select Time Frame", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = stringResource(R.string.select_time_frame),
+            style = MaterialTheme.typography.headlineMedium
+        )
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
@@ -78,7 +83,7 @@ fun TimeFrameView(
             enabled = timeFrameSelectionEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Select Custom Range")
+            Text(text = stringResource(R.string.select_custom_range))
         }
 
         HorizontalDivider(
@@ -88,7 +93,7 @@ fun TimeFrameView(
         Button(
             onClick = onConfigureTemplates, modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Configure Templates")
+            Text(text = stringResource(R.string.configure_templates))
         }
     }
 }
@@ -111,9 +116,15 @@ private fun CustomDateRangePicker(onDismiss: () -> Unit, onConfirm: (LocalDateRa
         }
     }
 
-    DatePickerDialog(onDismissRequest = onDismiss, confirmButton = {
-        TextButton(onClick = onClickOk, enabled = okEnabled) { Text("OK") }
-    }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }) {
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = onClickOk,
+                enabled = okEnabled
+            ) { Text(stringResource(R.string.ok)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }) {
         DateRangePicker(
             state = dateRangePickerState
         )

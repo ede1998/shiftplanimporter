@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Dienstplan Importer</string>
+    <string name="select_time_frame">Zeitraum auswählen</string>
+    <string name="select_custom_range">Benutzerdefinierten Zeitraum auswählen</string>
+    <string name="configure_templates">Vorlagen konfigurieren</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="undo">Rückgängig</string>
+    <string name="skip">Überspringen</string>
+    <string name="review_shifts">Dienstplan überprüfen</string>
+    <string name="discard_all_question">Alles verwerfen?</string>
+    <string name="discard_all_warning">Möchten Sie wirklich alle eingegebenen Schichten verwerfen? Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="discard">Verwerfen</string>
+    <string name="discard_all">Alles verwerfen</string>
+    <string name="import_all">Alles importieren</string>
+    <string name="title_activity_settings">Einstellungen</string>
+    <string name="permission_request">Berechtigungsanfrage</string>
+    <string name="request_calendar_permissions">Kalenderberechtigungen anfordern</string>
+    <string name="shift_templates">Schichtvorlagen</string>
+    <string name="add_new_template">Neue Vorlage hinzufügen</string>
+    <string name="all_day">Ganztägig</string>
+    <string name="edit_template">Vorlage bearbeiten</string>
+    <string name="delete_template">Vorlage löschen</string>
+    <string name="summary">Zusammenfassung</string>
+    <string name="start">Start</string>
+    <string name="end">Ende</string>
+    <string name="calendar">Kalender</string>
+    <string name="description">Beschreibung</string>
+    <string name="save">Speichern</string>
+    <string name="summary_cannot_be_empty">Zusammenfassung darf nicht leer sein</string>
+    <string name="non_all_day_event_must_have_start_and_end_time">Nicht ganztägige Termine müssen eine Start- und Endzeit haben</string>
+    <string name="calendar_must_be_selected">Kalender muss ausgewählt sein</string>
+    <plurals name="successfully_imported_shifts">
+        <item quantity="one">1 Schicht erfolgreich importiert</item>
+        <item quantity="other">%d Schichten erfolgreich importiert</item>
+    </plurals>
+    <string name="calendar_permission_denied">Kalenderberechtigung verweigert</string>
+    <string name="calendar_permissions_required_import">Kalenderberechtigungen sind erforderlich, um Schichten zu importieren.</string>
+    <string name="calendar_permissions_required_template">Kalenderberechtigungen sind erforderlich, um verfügbare Kalender für die Erstellung von Schichtvorlagen zu lesen</string>
+</resources>

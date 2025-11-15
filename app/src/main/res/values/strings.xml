@@ -1,4 +1,40 @@
 <resources>
     <string name="app_name">Shift Plan Importer</string>
+    <string name="select_time_frame">Select Time Frame</string>
+    <string name="select_custom_range">Select Custom Range</string>
+    <string name="configure_templates">Configure Templates</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="undo">Undo</string>
+    <string name="skip">Skip</string>
+    <string name="review_shifts">Review Shifts</string>
+    <string name="discard_all_question">Discard all?</string>
+    <string name="discard_all_warning">Are you sure you want to discard all entered shifts? This cannot be undone.</string>
+    <string name="discard">Discard</string>
+    <string name="discard_all">Discard All</string>
+    <string name="import_all">Import All</string>
     <string name="title_activity_settings">Settings</string>
+    <string name="permission_request">Permission request</string>
+    <string name="request_calendar_permissions">Request Calendar Permissions</string>
+    <string name="shift_templates">Shift Templates</string>
+    <string name="add_new_template">Add new template</string>
+    <string name="all_day">All day</string>
+    <string name="edit_template">Edit template</string>
+    <string name="delete_template">Delete template</string>
+    <string name="summary">Summary</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+    <string name="calendar">Calendar</string>
+    <string name="description">Description</string>
+    <string name="save">Save</string>
+    <string name="summary_cannot_be_empty">Summary cannot be empty</string>
+    <string name="non_all_day_event_must_have_start_and_end_time">Non-all day event must have start and end time</string>
+    <string name="calendar_must_be_selected">Calendar must be selected</string>
+    <plurals name="successfully_imported_shifts">
+        <item quantity="one">Successfully imported 1 shift</item>
+        <item quantity="other">Successfully imported %d shifts</item>
+    </plurals>
+    <string name="calendar_permission_denied">Calendar permission denied</string>
+    <string name="calendar_permissions_required_import">Calendar permissions are required to import shifts.</string>
+    <string name="calendar_permissions_required_template">Calendar permissions required to read available calendars for shift template creation</string>
 </resources>

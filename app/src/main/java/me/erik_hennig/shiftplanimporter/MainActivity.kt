@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -180,7 +181,7 @@ private fun ReviewScreen(
     val launchCalendarImport = rememberCalendarPermissionLauncher({
         importShiftsToCalendar(context, enteringState.enteredShifts)
         onStateChange(SelectingDateRange)
-    }, "Calendar permissions are required to import shifts.")
+    }, stringResource(R.string.calendar_permissions_required_import))
 
     ReviewView(
         modifier = modifier

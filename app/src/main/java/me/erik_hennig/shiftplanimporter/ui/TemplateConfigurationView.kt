@@ -30,9 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalTime
+import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.calendar.CalendarInfo
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.data.ShiftTimes
@@ -68,7 +70,7 @@ fun TemplateConfigurationView(
         OutlinedTextField(
             value = summary,
             onValueChange = { summary = it },
-            label = { Text("Summary") },
+            label = { Text(stringResource(R.string.summary)) },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -76,11 +78,11 @@ fun TemplateConfigurationView(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = isAllDay, onCheckedChange = { isAllDay = it })
-            Text(text = "All day")
+            Text(text = stringResource(R.string.all_day))
             Spacer(modifier = Modifier.width(16.dp))
             Row(modifier = Modifier.weight(1f)) {
                 TimeInput(
-                    label = "Start",
+                    label = stringResource(R.string.start),
                     enabled = !isAllDay,
                     initialTime = startTime,
                     onSave = { startTime = it },
@@ -88,7 +90,7 @@ fun TemplateConfigurationView(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 TimeInput(
-                    label = "End",
+                    label = stringResource(R.string.end),
                     enabled = !isAllDay,
                     initialTime = endTime,
                     onSave = { endTime = it },
@@ -108,7 +110,7 @@ fun TemplateConfigurationView(
                 readOnly = true,
                 value = selectedCalendar?.name ?: "",
                 onValueChange = {},
-                label = { Text("Calendar") },
+                label = { Text(stringResource(R.string.calendar)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCalendarDropdownExpanded) },
             )
             ExposedDropdownMenu(
@@ -127,20 +129,21 @@ fun TemplateConfigurationView(
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
-            label = { Text("Description") },
+            label = { Text(stringResource(R.string.description)) },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.weight(1f))
         Row {
             Button(onClick = onCancel) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(onClick = {
                 if (summary == "") {
                     Log.e(TAG, "Summary cannot be empty")
-                    Toast.makeText(context, "Summary cannot be empty", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.summary_cannot_be_empty, Toast.LENGTH_SHORT)
+                        .show()
                     return@Button
                 }
 
@@ -148,7 +151,7 @@ fun TemplateConfigurationView(
                     Log.e(TAG, "Non-all day event must have start and end time")
                     Toast.makeText(
                         context,
-                        "Non-all day event must have start and end time",
+                        R.string.non_all_day_event_must_have_start_and_end_time,
                         Toast.LENGTH_SHORT
                     ).show()
                     return@Button
@@ -157,7 +160,8 @@ fun TemplateConfigurationView(
                 val calendar = selectedCalendar
                 if (calendar == null) {
                     Log.e(TAG, "Calendar must be selected")
-                    Toast.makeText(context, "Calendar must be selected", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.calendar_must_be_selected, Toast.LENGTH_SHORT)
+                        .show()
                     return@Button
                 }
 
@@ -171,7 +175,7 @@ fun TemplateConfigurationView(
 
                 onSave(shiftTemplate)
             }) {
-                Text("Save")
+                Text(stringResource(R.string.save))
             }
         }
     }

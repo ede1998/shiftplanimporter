@@ -11,6 +11,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
+import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
 import kotlin.time.ExperimentalTime
 
@@ -109,10 +110,12 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
             }
         }
         Log.i(TAG, "Successfully imported ${shifts.size} shifts.")
-        Toast.makeText(context, "Successfully imported ${shifts.size} shifts", Toast.LENGTH_SHORT)
-            .show()
+        val toastText = context.resources.getQuantityString(
+            R.plurals.successfully_imported_shifts, shifts.size, shifts.size
+        )
+        Toast.makeText(context, toastText, Toast.LENGTH_SHORT).show()
     } catch (e: SecurityException) {
         Log.e(TAG, "Permission denied for calendar access.", e)
-        Toast.makeText(context, "Calendar permission denied", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, R.string.calendar_permission_denied, Toast.LENGTH_LONG).show()
     }
 }

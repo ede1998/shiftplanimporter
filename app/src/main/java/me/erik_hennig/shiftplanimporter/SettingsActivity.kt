@@ -36,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -128,10 +129,9 @@ class SettingsActivity : ComponentActivity() {
 @Composable
 private fun RequestCalendarPermissionScreen(onFinish: () -> Unit) {
     val requestPermission = rememberCalendarPermissionLauncher(
-        onFinish,
-        "Calendar permissions required to read available calendars for shift template creation"
+        onFinish, stringResource(R.string.calendar_permissions_required_template)
     )
-    Scaffold(topBar = { TopAppBar(title = { Text("Permission request") }) }) { paddingValues ->
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.permission_request)) }) }) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -145,7 +145,7 @@ private fun RequestCalendarPermissionScreen(onFinish: () -> Unit) {
                     .fillMaxWidth()
                     .padding(horizontal = 32.dp)
             ) {
-                Text(text = "Request Calendar Permissions")
+                Text(text = stringResource(R.string.request_calendar_permissions))
             }
         }
     }
@@ -159,11 +159,16 @@ fun TemplateListScreen(
     onEdit: (String) -> Unit,
     onDelete: (ShiftTemplate) -> Unit
 ) {
-    Scaffold(topBar = { TopAppBar(title = { Text("Shift Templates") }) }, floatingActionButton = {
-        FloatingActionButton(onClick = onAdd) {
-            Icon(Icons.Default.Add, contentDescription = "Add new template")
-        }
-    }) { paddingValues ->
+    Scaffold(
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.shift_templates)) }) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onAdd) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = stringResource(R.string.add_new_template)
+                )
+            }
+        }) { paddingValues ->
         LazyColumn(modifier = Modifier.padding(paddingValues)) {
             items(templates) { template ->
                 Row(
@@ -175,7 +180,7 @@ fun TemplateListScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(template.summary)
                         if (template.times == null) {
-                            Text("All day")
+                            Text(stringResource(R.string.all_day))
                         } else {
                             with(template.times) {
                                 Text("${start.formatDefault()} - ${end.formatDefault()}")
@@ -183,10 +188,16 @@ fun TemplateListScreen(
                         }
                     }
                     IconButton(onClick = { onEdit(template.id) }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit template")
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.edit_template)
+                        )
                     }
                     IconButton(onClick = { onDelete(template) }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete template")
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = stringResource(R.string.delete_template)
+                        )
                     }
                 }
             }

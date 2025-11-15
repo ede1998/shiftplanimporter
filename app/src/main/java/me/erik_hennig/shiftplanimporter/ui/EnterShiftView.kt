@@ -12,10 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.LocalDate
+import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.data.templateExamples
 import me.erik_hennig.shiftplanimporter.extensions.dateAndWeekDayFormat
@@ -57,10 +59,10 @@ fun EnterShiftView(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(onClick = onUndo) {
-                Text(text = "Undo")
+                Text(text = stringResource(R.string.undo))
             }
             Button(onClick = onSkip) {
-                Text(text = "Skip")
+                Text(text = stringResource(R.string.skip))
             }
         }
     }

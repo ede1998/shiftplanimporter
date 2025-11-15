@@ -25,11 +25,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
+import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
 import me.erik_hennig.shiftplanimporter.data.templateExamples
 import me.erik_hennig.shiftplanimporter.extensions.dateOnlyFormat
@@ -53,16 +55,18 @@ fun ReviewView(
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
-            title = { Text("Discard all?") },
-            text = { Text("Are you sure you want to discard all entered shifts? This cannot be undone.") },
+            title = { Text(stringResource(R.string.discard_all_question)) },
+            text = { Text(stringResource(R.string.discard_all_warning)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardDialog = false
                     onDiscardAll()
-                }) { Text("Discard") }
+                }) { Text(stringResource(R.string.discard)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDiscardDialog = false }) { Text("Cancel") }
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                }) { Text(stringResource(R.string.cancel)) }
             })
     }
 
@@ -71,7 +75,10 @@ fun ReviewView(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(text = "Review Shifts", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            text = stringResource(R.string.review_shifts),
+            style = MaterialTheme.typography.headlineMedium
+        )
         HorizontalDivider(
             modifier = Modifier.padding(vertical = 8.dp), thickness = 2.dp, color = Color.Gray
         )
@@ -114,10 +121,10 @@ fun ReviewView(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(onClick = { showDiscardDialog = true }) {
-                Text(text = "Discard All")
+                Text(text = stringResource(R.string.discard_all))
             }
             Button(onClick = onImportAll) {
-                Text(text = "Import All")
+                Text(text = stringResource(R.string.import_all))
             }
         }
     }
