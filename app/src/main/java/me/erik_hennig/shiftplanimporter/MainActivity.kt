@@ -83,8 +83,10 @@ private fun ShiftPlanImporterApp() {
             when (val enteringState = currentEnteringState) {
                 is SelectingDateRange -> {
                     TimeFrameScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        onStateChange = { currentEnteringState = it })
+                        modifier = Modifier.padding(innerPadding), onStateChange = {
+                            @Suppress("AssignedValueIsNeverRead") // reason: False positive
+                            currentEnteringState = it
+                        })
                 }
 
                 is EnteringShifts -> {
@@ -92,14 +94,20 @@ private fun ShiftPlanImporterApp() {
                         modifier = Modifier.padding(innerPadding),
                         enteringState = enteringState,
                         templates = templates,
-                        onStateChange = { currentEnteringState = it })
+                        onStateChange = {
+                            @Suppress("AssignedValueIsNeverRead") // reason: False positive
+                            currentEnteringState = it
+                        })
                 }
 
                 is Review -> {
                     ReviewScreen(
                         modifier = Modifier.padding(innerPadding),
                         enteringState = enteringState,
-                        onStateChange = { currentEnteringState = it },
+                        onStateChange = {
+                            @Suppress("AssignedValueIsNeverRead") // reason: False positive
+                            currentEnteringState = it
+                        },
                     )
                 }
             }
