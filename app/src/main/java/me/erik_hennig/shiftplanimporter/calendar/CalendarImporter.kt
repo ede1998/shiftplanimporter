@@ -16,6 +16,45 @@ import kotlin.time.ExperimentalTime
 
 private const val TAG = "CalendarImporter"
 
+data class CalendarInfo(val id: Long, val name: String, val isPrimary: Boolean)
+
+/**
+ * Returns a list of available calendars.
+ * Note: This function requires the READ_CALENDAR permission.
+ */
+fun getCalendars(context: Context): List<CalendarInfo> {
+    val calendars = mutableListOf<CalendarInfo>()
+    val projection = arrayOf(
+        CalendarContract.Calendars._ID,
+        CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+        CalendarContract.Calendars.IS_PRIMARY
+    )
+    val selection =
+        "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL} >= ?"
+    val selectionArgs = arrayOf("1", CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR.toString())
+
+    context.contentResolver.query(
+        CalendarContract.Calendars.CONTENT_URI, projection, selection, selectionArgs, null
+    )?.use { cursor ->
+        val idColumn = cursor.getColumnIndexOrThrow(CalendarContract.Calendars._ID)
+        val nameColumn =
+            cursor.getColumnIndexOrThrow(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME)
+        val isPrimaryColumn = cursor.getColumnIndexOrThrow(CalendarContract.Calendars.IS_PRIMARY)
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idColumn)
+            val name = cursor.getString(nameColumn)
+            val isPrimary = cursor.getInt(isPrimaryColumn) == 1
+            calendars.add(CalendarInfo(id, name, isPrimary))
+        }
+    }
+    calendars.sortWith(compareByDescending { it.isPrimary })
+
+    Log.d(TAG, "Loaded calendars: $calendars")
+
+    return calendars
+}
+
 /**
  * Imports the given list of shift events into the user's primary calendar.
  * Note: This function requires the WRITE_CALENDAR and READ_CALENDAR permissions.
@@ -23,41 +62,6 @@ private const val TAG = "CalendarImporter"
 @OptIn(ExperimentalTime::class)
 fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
     try {
-        // Get primary calendar ID
-        val projection = arrayOf(CalendarContract.Calendars._ID)
-        val selection =
-            "${CalendarContract.Calendars.VISIBLE} = ? AND ${CalendarContract.Calendars.IS_PRIMARY} = ?"
-        var calendarId: Long? = null
-        context.contentResolver.query(
-            CalendarContract.Calendars.CONTENT_URI, projection, selection, arrayOf("1", "1"), null
-        )?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                calendarId = cursor.getLong(0)
-            }
-        }
-
-        // Fallback to first visible calendar if no primary is found
-        if (calendarId == null) {
-            context.contentResolver.query(
-                CalendarContract.Calendars.CONTENT_URI,
-                projection,
-                "${CalendarContract.Calendars.VISIBLE} = ?",
-                arrayOf("1"),
-                null
-            )?.use { cursor ->
-                if (cursor.moveToFirst()) {
-                    calendarId = cursor.getLong(0)
-                }
-            }
-        }
-
-        if (calendarId == null) {
-            Log.e(TAG, "No writable calendar found.")
-            Toast.makeText(context, "No calendar found to import shifts into", Toast.LENGTH_LONG)
-                .show()
-            return
-        }
-
         val zone = TimeZone.currentSystemDefault()
 
         for (shiftEvent in shifts) {
@@ -65,8 +69,7 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
                 shiftEvent.template.let {
                     put(CalendarContract.Events.TITLE, it.summary)
                     put(CalendarContract.Events.DESCRIPTION, it.description)
-                    // TODO: use correct calendar
-                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
+                    put(CalendarContract.Events.CALENDAR_ID, it.calendarId)
                     put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
 
                     when (it.times) {
@@ -83,12 +86,15 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
                             put(CalendarContract.Events.DTSTART, dayMillis)
                             put(CalendarContract.Events.DTEND, dayMillis)
                         }
+
                         else -> {
                             val start = LocalDateTime(shiftEvent.date, it.times.start)
-                            val overnight = if (it.times.start < it.times.end) { 0 } else { 1 }
+                            val overnight = when (it.times.start < it.times.end) {
+                                false -> 0
+                                true -> 1
+                            }
                             val end = LocalDateTime(
-                                shiftEvent.date.plus(overnight, DateTimeUnit.DAY),
-                                it.times.end
+                                shiftEvent.date.plus(overnight, DateTimeUnit.DAY), it.times.end
                             )
 
                             val startMillis = start.toInstant(zone).toEpochMilliseconds()

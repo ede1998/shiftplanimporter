@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalTime
-import me.erik_hennig.shiftplanimporter.data.CalendarInfo
+import me.erik_hennig.shiftplanimporter.calendar.CalendarInfo
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.data.ShiftTimes
 import me.erik_hennig.shiftplanimporter.extensions.formatDefault
@@ -52,9 +52,7 @@ fun TemplateConfigurationView(
     onCancel: () -> Unit
 ) {
     var isAllDay by remember {
-        mutableStateOf(
-            initialTemplate?.times?.equals(null) ?: false
-        )
+        mutableStateOf(initialTemplate.let { (it != null) && (it.times == null) })
     }
     var summary by remember { mutableStateOf(initialTemplate?.summary ?: "") }
     var description by remember { mutableStateOf(initialTemplate?.description ?: "") }
@@ -148,7 +146,8 @@ fun TemplateConfigurationView(
                     return@Button
                 }
 
-                if (selectedCalendar == null) {
+                val calendar = selectedCalendar
+                if (calendar == null) {
                     Log.e(TAG, "Calendar must be selected")
                     return@Button
                 }
@@ -158,7 +157,7 @@ fun TemplateConfigurationView(
                     summary = summary,
                     description = description,
                     times = if (isAllDay) null else ShiftTimes(startTime!!, endTime!!),
-                    calendarId = selectedCalendar?.id,
+                    calendarId = calendar.id,
                 )
 
                 onSave(shiftTemplate)
@@ -217,7 +216,8 @@ private fun TemplateConfigurationViewPreview() {
     ShiftPlanImporterTheme {
         TemplateConfigurationView(
             calendars = listOf(
-                CalendarInfo(1, "Personal"), CalendarInfo(2, "Work")
+                CalendarInfo(1, "Personal", isPrimary = false),
+                CalendarInfo(2, "Work", isPrimary = false)
             ),
             onSave = { }, onCancel = { },
             initialTemplate = null,

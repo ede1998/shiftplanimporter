@@ -4,8 +4,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateRange
 import me.erik_hennig.shiftplanimporter.data.ShiftEvent
 
-// TODO: Add welcome screen
-// TODO: Add settings
 sealed class EnteringState {
     object SelectingDateRange : EnteringState()
     data class EnteringShifts(

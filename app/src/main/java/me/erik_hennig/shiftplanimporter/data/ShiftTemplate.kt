@@ -10,7 +10,7 @@ data class ShiftTemplate(
     val summary: String,
     val description: String = "",
     val times: ShiftTimes? = null,
-    val calendarId: Long? = null
+    val calendarId: Long
 )
 
 @Serializable
@@ -26,18 +26,22 @@ val templateExamples = listOf(
     ShiftTemplate(
         id = "1",
         summary = "Morning shift",
-        times = ShiftTimes(start = LocalTime(5, 30), end = LocalTime(15, 0))
+        times = ShiftTimes(start = LocalTime(5, 30), end = LocalTime(15, 0)),
+        calendarId = 1
     ), ShiftTemplate(
         id = "2",
         summary = "Evening shift",
-        times = ShiftTimes(start = LocalTime(14, 30), end = LocalTime(22, 0))
+        times = ShiftTimes(start = LocalTime(14, 30), end = LocalTime(22, 0)),
+        calendarId = 1
     ), ShiftTemplate(
         id = "3",
         summary = "Night shift",
-        times = ShiftTimes(start = LocalTime(21, 30), end = LocalTime(6, 0))
+        times = ShiftTimes(start = LocalTime(21, 30), end = LocalTime(6, 0)),
+        calendarId = 2
     ), ShiftTemplate(
         id = "4",
         summary = "Day shift",
-        times = ShiftTimes(start = LocalTime(8, 30), end = LocalTime(17, 0))
+        times = ShiftTimes(start = LocalTime(8, 30), end = LocalTime(17, 0)),
+        calendarId = 2
     )
 )

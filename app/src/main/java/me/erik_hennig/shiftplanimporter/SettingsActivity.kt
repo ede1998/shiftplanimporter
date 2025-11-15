@@ -34,7 +34,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
-import me.erik_hennig.shiftplanimporter.data.CalendarInfo
+import me.erik_hennig.shiftplanimporter.calendar.getCalendars
 import me.erik_hennig.shiftplanimporter.data.SettingsRepository
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.extensions.formatDefault
@@ -50,8 +50,8 @@ class SettingsActivity : ComponentActivity() {
             ShiftPlanImporterTheme {
                 val context = LocalContext.current
                 val settings = remember { SettingsRepository(context) }
+                val calendars = remember { getCalendars(context) }
                 val navController = rememberNavController()
-                val calendars = listOf(CalendarInfo(1, "Personal"), CalendarInfo(2, "Work"))
                 val coroutineScope = rememberCoroutineScope()
                 val templates by settings.templates.collectAsState(
                     emptyList(), coroutineScope.coroutineContext
