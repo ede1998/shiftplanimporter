@@ -46,8 +46,7 @@ fun ReviewView(
     shiftEvents: List<ShiftEvent>,
     onEdit: (Int) -> Unit,
     onDiscardAll: () -> Unit,
-    onImportAll: () -> Unit,
-    onExportAll: () -> Unit
+    onImportAll: () -> Unit
 ) {
     var showDiscardDialog by remember { mutableStateOf(false) }
 
@@ -121,9 +120,6 @@ fun ReviewView(
                 Text(text = "Import All")
             }
         }
-        Button(onClick = onExportAll) {
-            Text(text = "Export as ICS")
-        }
     }
 }
 
@@ -154,11 +150,6 @@ fun ReviewViewPreview() {
         ShiftEvent(templateExamples[0], LocalDate.today().plus(20, DateTimeUnit.DAY))
     )
     ShiftPlanImporterTheme {
-        ReviewView(
-            shiftEvents = shiftEvents,
-            onEdit = {},
-            onDiscardAll = {},
-            onImportAll = {},
-            onExportAll = {})
+        ReviewView(shiftEvents = shiftEvents, onEdit = {}, onDiscardAll = {}, onImportAll = {})
     }
 }

@@ -198,10 +198,5 @@ private fun ReviewScreen(
         onImportAll = {
             Log.i(TAG, "Importing shift selection")
             launchCalendarImport()
-        },
-        onExportAll = {
-            // TODO: Implement export
-            Log.i(TAG, "Exporting shift selection")
-            onStateChange(SelectingDateRange)
         })
 }
