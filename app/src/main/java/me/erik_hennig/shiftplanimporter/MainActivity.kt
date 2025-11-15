@@ -66,9 +66,10 @@ private fun ShiftPlanImporterApp() {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (val enteringState = currentEnteringState) {
                 is SelectingDateRange -> {
-                    // TODO: disable all buttons if no templates available
                     TimeFrameScreen(
-                        modifier = Modifier.padding(innerPadding), onStateChange = {
+                        modifier = Modifier.padding(innerPadding),
+                        templates = templates,
+                        onStateChange = {
                             @Suppress("AssignedValueIsNeverRead") // reason: False positive
                             currentEnteringState = it
                         })
@@ -101,7 +102,11 @@ private fun ShiftPlanImporterApp() {
 }
 
 @Composable
-private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (EnteringState) -> Unit) {
+private fun TimeFrameScreen(
+    modifier: Modifier = Modifier,
+    templates: List<ShiftTemplate>,
+    onStateChange: (EnteringState) -> Unit
+) {
     val context = LocalContext.current
     val upcomingMonths = remember {
         val start = LocalDate.today().yearMonth
@@ -113,6 +118,7 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
         upcomingMonths = upcomingMonths,
+        timeFrameSelectionEnabled = templates.isNotEmpty(),
         onTimeFrameSelected = { timeFrame ->
             Log.i(TAG, "Selected date range: $timeFrame")
             onStateChange(EnteringShifts(timeFrame))
@@ -187,7 +193,6 @@ private fun ReviewScreen(
         },
         onDiscardAll = {
             Log.i(TAG, "Discarding shift selection")
-            // TODO: warn
             onStateChange(SelectingDateRange)
         },
         onImportAll = {

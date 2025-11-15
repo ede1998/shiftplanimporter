@@ -11,11 +11,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,6 +40,7 @@ import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 
 
 @Composable
+@Suppress("AssignedValueIsNeverRead") // reason: False positive
 fun ReviewView(
     modifier: Modifier = Modifier,
     shiftEvents: List<ShiftEvent>,
@@ -42,6 +49,24 @@ fun ReviewView(
     onImportAll: () -> Unit,
     onExportAll: () -> Unit
 ) {
+    var showDiscardDialog by remember { mutableStateOf(false) }
+
+    if (showDiscardDialog) {
+        AlertDialog(
+            onDismissRequest = { showDiscardDialog = false },
+            title = { Text("Discard all?") },
+            text = { Text("Are you sure you want to discard all entered shifts? This cannot be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardDialog = false
+                    onDiscardAll()
+                }) { Text("Discard") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDiscardDialog = false }) { Text("Cancel") }
+            })
+    }
+
     Column(
         modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -89,7 +114,7 @@ fun ReviewView(
         Row(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = onDiscardAll) {
+            Button(onClick = { showDiscardDialog = true }) {
                 Text(text = "Discard All")
             }
             Button(onClick = onImportAll) {

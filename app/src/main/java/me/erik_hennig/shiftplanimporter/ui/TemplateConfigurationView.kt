@@ -3,6 +3,7 @@ package me.erik_hennig.shiftplanimporter.ui
 import android.app.TimePickerDialog
 import android.text.format.DateFormat
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,7 @@ fun TemplateConfigurationView(
     onSave: (ShiftTemplate) -> Unit,
     onCancel: () -> Unit
 ) {
+    val context = LocalContext.current
     var isAllDay by remember {
         mutableStateOf(initialTemplate.let { (it != null) && (it.times == null) })
     }
@@ -138,17 +140,24 @@ fun TemplateConfigurationView(
             Button(onClick = {
                 if (summary == "") {
                     Log.e(TAG, "Summary cannot be empty")
+                    Toast.makeText(context, "Summary cannot be empty", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
                 if (!isAllDay && (startTime == null || endTime == null)) {
                     Log.e(TAG, "Non-all day event must have start and end time")
+                    Toast.makeText(
+                        context,
+                        "Non-all day event must have start and end time",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     return@Button
                 }
 
                 val calendar = selectedCalendar
                 if (calendar == null) {
                     Log.e(TAG, "Calendar must be selected")
+                    Toast.makeText(context, "Calendar must be selected", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 

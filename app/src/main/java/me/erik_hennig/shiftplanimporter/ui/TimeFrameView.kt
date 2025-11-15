@@ -29,6 +29,7 @@ import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 fun TimeFrameView(
     modifier: Modifier = Modifier,
     upcomingMonths: YearMonthProgression,
+    timeFrameSelectionEnabled: Boolean = true,
     onTimeFrameSelected: (LocalDateRange) -> Unit,
     onConfigureTemplates: () -> Unit
 ) {
@@ -45,6 +46,7 @@ fun TimeFrameView(
         upcomingMonths.forEach { month ->
             Button(
                 onClick = { onTimeFrameSelected(month.firstDay..month.lastDay) },
+                enabled = timeFrameSelectionEnabled,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = month.firstDay.format(monthOnlyFormat()))
