@@ -1,6 +1,7 @@
 package me.erik_hennig.shiftplanimporter.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,18 +59,27 @@ fun ReviewView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            color = with(MaterialTheme.colorScheme) {
+                                if (event.template == null) surface else surfaceVariant
+                            }, shape = RoundedCornerShape(8.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.tertiary,
                             shape = RoundedCornerShape(8.dp)
                         )
                         .clickable { onEdit(index) }
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically) {
+                        .padding(
+                            horizontal = 16.dp, vertical = 12.dp
+                        ), verticalAlignment = Alignment.CenterVertically) {
 
                     val date = event.date.format(dateOnlyFormat())
                     val weekDay = event.date.format(weekDayOnlyFormat())
                     Text(text = weekDay, modifier = Modifier.weight(1f))
                     Text(text = date, modifier = Modifier.weight(1.5f))
-                    Text(text = event.template.summary, modifier = Modifier.weight(1f))
+                    Text(
+                        text = event.template?.summary ?: "—", modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -101,6 +111,7 @@ fun ReviewViewPreview() {
         ShiftEvent(templateExamples[1], LocalDate.today().plus(2, DateTimeUnit.DAY)),
         ShiftEvent(templateExamples[1], LocalDate.today().plus(3, DateTimeUnit.DAY)),
         ShiftEvent(templateExamples[1], LocalDate.today().plus(4, DateTimeUnit.DAY)),
+        ShiftEvent(null, LocalDate.today().plus(5, DateTimeUnit.DAY)),
         ShiftEvent(templateExamples[2], LocalDate.today().plus(6, DateTimeUnit.DAY)),
         ShiftEvent(templateExamples[2], LocalDate.today().plus(7, DateTimeUnit.DAY)),
         ShiftEvent(templateExamples[2], LocalDate.today().plus(8, DateTimeUnit.DAY)),

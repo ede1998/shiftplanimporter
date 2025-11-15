@@ -28,20 +28,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.calendar.importShiftsToCalendar
 import me.erik_hennig.shiftplanimporter.data.SettingsRepository
-import me.erik_hennig.shiftplanimporter.data.ShiftEvent
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.extensions.today
-import me.erik_hennig.shiftplanimporter.extensions.withEarlierStart
-import me.erik_hennig.shiftplanimporter.extensions.withLaterStart
 import me.erik_hennig.shiftplanimporter.state.EnteringState
+import me.erik_hennig.shiftplanimporter.state.EnteringState.EditingShift
 import me.erik_hennig.shiftplanimporter.state.EnteringState.EnteringShifts
-import me.erik_hennig.shiftplanimporter.state.EnteringState.Review
+import me.erik_hennig.shiftplanimporter.state.EnteringState.Reviewing
 import me.erik_hennig.shiftplanimporter.state.EnteringState.SelectingDateRange
+import me.erik_hennig.shiftplanimporter.state.ModifyShift
 import me.erik_hennig.shiftplanimporter.ui.EnterShiftView
 import me.erik_hennig.shiftplanimporter.ui.ReviewView
 import me.erik_hennig.shiftplanimporter.ui.TimeFrameView
@@ -89,8 +87,8 @@ private fun ShiftPlanImporterApp() {
                         })
                 }
 
-                is EnteringShifts -> {
-                    EnterShiftScreen(
+                is EnteringShifts, is EditingShift -> {
+                    ModifyShiftScreen(
                         modifier = Modifier.padding(innerPadding),
                         enteringState = enteringState,
                         templates = templates,
@@ -100,7 +98,7 @@ private fun ShiftPlanImporterApp() {
                         })
                 }
 
-                is Review -> {
+                is Reviewing -> {
                     ReviewScreen(
                         modifier = Modifier.padding(innerPadding),
                         enteringState = enteringState,
@@ -130,11 +128,7 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
         upcomingMonths = upcomingMonths,
         onTimeFrameSelected = { timeFrame ->
             Log.i(TAG, "Selected date range: $timeFrame")
-            onStateChange(
-                EnteringShifts(
-                    dateRange = timeFrame
-                )
-            )
+            onStateChange(EnteringShifts(timeFrame))
         },
         onConfigureTemplates = {
             context.startActivity(Intent(context, SettingsActivity::class.java))
@@ -142,55 +136,32 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
 }
 
 @Composable
-private fun EnterShiftScreen(
+private fun ModifyShiftScreen(
     modifier: Modifier = Modifier,
-    enteringState: EnteringShifts,
+    enteringState: ModifyShift,
     templates: List<ShiftTemplate>,
     onStateChange: (EnteringState) -> Unit
 ) {
     val onShiftSelected: (ShiftTemplate) -> Unit = {
-        val newEvent = ShiftEvent(template = it, date = enteringState.currentDate)
-        val remainingDays = enteringState.dateRange.withLaterStart()
-        val enteredShifts = enteringState.enteredShifts + newEvent
-
-        val newState = if (remainingDays.isEmpty()) {
-            Review(enteredShifts = enteredShifts)
-        } else {
-            EnteringShifts(dateRange = remainingDays, enteredShifts = enteredShifts)
-        }
+        val newState = enteringState.enter(it)
         onStateChange(newState)
-        Log.i(TAG, "Added new shift: $newEvent")
+        Log.i(TAG, "Added new shift: ${newState.shifts.last()}")
     }
 
     val onSkip: () -> Unit = {
-        val remainingDays = enteringState.dateRange.withLaterStart()
-
-        val newState = if (remainingDays.isEmpty()) {
-            Review(
-                enteredShifts = enteringState.enteredShifts
-            )
-        } else {
-            enteringState.copy(dateRange = remainingDays)
-        }
-        onStateChange(newState)
+        onStateChange(enteringState.enter(null))
         Log.i(TAG, "Skipped day ${enteringState.currentDate}")
     }
 
     val onUndo: () -> Unit = {
-        val newState = if (enteringState.enteredShifts.isEmpty()) {
-            SelectingDateRange
-        } else {
-            val remainingDays = enteringState.dateRange.withEarlierStart()
-            EnteringShifts(
-                dateRange = remainingDays,
-                enteredShifts = enteringState.enteredShifts.dropLast(1),
-            )
-        }
+        val newState = enteringState.undo()
         onStateChange(newState)
-        val previousDay = enteringState.currentDate.minus(1, DateTimeUnit.DAY)
-        Log.i(
-            TAG, "Returning to previous day $previousDay"
-        )
+        if (newState is EnteringShifts) {
+            val previousDay = newState.currentDate
+            Log.i(TAG, "Returning to previous day $previousDay")
+        } else {
+            Log.i(TAG, "Returning to previous screen")
+        }
     }
 
     EnterShiftView(
@@ -208,7 +179,7 @@ private fun EnterShiftScreen(
 @Composable
 private fun ReviewScreen(
     modifier: Modifier = Modifier,
-    enteringState: Review,
+    enteringState: Reviewing,
     onStateChange: (EnteringState) -> Unit,
 ) {
     val context = LocalContext.current
@@ -233,12 +204,12 @@ private fun ReviewScreen(
             .verticalScroll(rememberScrollState()),
         shiftEvents = enteringState.enteredShifts,
         onEdit = {
-            // TODO: Implement edit
-            Toast.makeText(context, "Editing not yet implemented", Toast.LENGTH_LONG).show()
             Log.i(TAG, "Editing shift: ${enteringState.enteredShifts[it]}")
+            onStateChange(enteringState.editShift(it))
         },
         onDiscardAll = {
             Log.i(TAG, "Discarding shift selection")
+            // TODO: warn
             onStateChange(SelectingDateRange)
         },
         onImportAll = {

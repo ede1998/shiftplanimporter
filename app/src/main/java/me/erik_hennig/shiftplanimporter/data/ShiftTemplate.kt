@@ -19,7 +19,7 @@ data class ShiftTimes(
     val end: LocalTime,
 )
 
-data class ShiftEvent(val template: ShiftTemplate, val date: LocalDate)
+data class ShiftEvent(val template: ShiftTemplate?, val date: LocalDate)
 
 
 val templateExamples = listOf(

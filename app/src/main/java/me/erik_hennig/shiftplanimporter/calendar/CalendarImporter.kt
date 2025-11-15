@@ -65,8 +65,8 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
         val zone = TimeZone.currentSystemDefault()
 
         for (shiftEvent in shifts) {
-            val values = ContentValues().apply {
-                shiftEvent.template.let {
+            shiftEvent.template?.let {
+                val values = ContentValues().apply {
                     put(CalendarContract.Events.TITLE, it.summary)
                     put(CalendarContract.Events.DESCRIPTION, it.description)
                     put(CalendarContract.Events.CALENDAR_ID, it.calendarId)
@@ -103,9 +103,10 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
                             put(CalendarContract.Events.DTEND, endMillis)
                         }
                     }
+
                 }
+                context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
             }
-            context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
         }
         Log.i(TAG, "Successfully imported ${shifts.size} shifts.")
         Toast.makeText(context, "Successfully imported ${shifts.size} shifts", Toast.LENGTH_SHORT)
