@@ -5,10 +5,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,14 +26,19 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateRange
+import kotlinx.datetime.TimeZone
 import kotlinx.datetime.YearMonthProgression
 import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.yearMonth
 import me.erik_hennig.shiftplanimporter.extensions.format
 import me.erik_hennig.shiftplanimporter.extensions.monthOnlyFormat
 import me.erik_hennig.shiftplanimporter.extensions.today
 import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@Suppress("AssignedValueIsNeverRead") // reason: False positive
 @Composable
 fun TimeFrameView(
     modifier: Modifier = Modifier,
@@ -33,6 +47,12 @@ fun TimeFrameView(
     onTimeFrameSelected: (LocalDateRange) -> Unit,
     onConfigureTemplates: () -> Unit
 ) {
+    var showDateRangePicker by remember { mutableStateOf(false) }
+    if (showDateRangePicker) {
+        CustomDateRangePicker(
+            onDismiss = { showDateRangePicker = false }, onConfirm = onTimeFrameSelected
+        )
+    }
     Column(
         modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -54,11 +74,11 @@ fun TimeFrameView(
         }
 
         Button(
-            onClick = { /* TODO: Handle custom time frame selection */ },
-            enabled = false,
+            onClick = { showDateRangePicker = true },
+            enabled = timeFrameSelectionEnabled,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Select Custom Range (Not implemented yet)")
+            Text(text = "Select Custom Range")
         }
 
         HorizontalDivider(
@@ -70,6 +90,33 @@ fun TimeFrameView(
         ) {
             Text(text = "Configure Templates")
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalTime::class)
+@Composable
+private fun CustomDateRangePicker(onDismiss: () -> Unit, onConfirm: (LocalDateRange) -> Unit) {
+    val dateRangePickerState = rememberDateRangePickerState()
+    val okEnabled =
+        dateRangePickerState.run { selectedEndDateMillis != null && selectedStartDateMillis != null }
+    val onClickOk = {
+        fun msToDate(ms: Long) =
+            Instant.fromEpochMilliseconds(ms).toLocalDateTime(TimeZone.UTC).date
+
+        val start = dateRangePickerState.selectedStartDateMillis?.let { msToDate(it) }
+        val end = dateRangePickerState.selectedEndDateMillis?.let { msToDate(it) }
+        if (start != null && end != null) {
+            onConfirm(start..end)
+        }
+    }
+
+    DatePickerDialog(onDismissRequest = onDismiss, confirmButton = {
+        TextButton(onClick = onClickOk, enabled = okEnabled) { Text("OK") }
+    }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }) {
+        DateRangePicker(
+            state = dateRangePickerState
+        )
     }
 }
 
