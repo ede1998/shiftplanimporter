@@ -13,6 +13,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,8 +76,7 @@ private fun ShiftPlanImporterApp() {
         }
 
         val templates by settings.templates.collectAsState(
-            emptyList(),
-            coroutineScope.coroutineContext
+            emptyList(), coroutineScope.coroutineContext
         )
 
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -115,7 +116,9 @@ private fun TimeFrameScreen(modifier: Modifier = Modifier, onStateChange: (Enter
         start..end
     }
     TimeFrameView(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         upcomingMonths = upcomingMonths,
         onTimeFrameSelected = { timeFrame ->
             Log.i(TAG, "Selected date range: $timeFrame")
@@ -183,7 +186,9 @@ private fun EnterShiftScreen(
     }
 
     EnterShiftView(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         date = enteringState.currentDate,
         templates = templates,
         onShiftSelected = onShiftSelected,
@@ -215,7 +220,9 @@ private fun ReviewScreen(
     }
 
     ReviewView(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         shiftEvents = enteringState.enteredShifts,
         onEdit = {
             // TODO: Implement edit
