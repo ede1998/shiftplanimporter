@@ -1,16 +1,11 @@
 package me.erik_hennig.shiftplanimporter
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -25,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
@@ -47,10 +41,6 @@ import me.erik_hennig.shiftplanimporter.ui.theme.ShiftPlanImporterTheme
 
 private const val TAG = "MainActivity"
 
-private val CALENDAR_PERMISSIONS = arrayOf(
-    Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR
-)
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,11 +57,7 @@ private fun ShiftPlanImporterApp() {
         val context = LocalContext.current
         val settings = remember { SettingsRepository(context) }
         val coroutineScope = rememberCoroutineScope()
-        var currentEnteringState by remember {
-            mutableStateOf<EnteringState>(
-                SelectingDateRange
-            )
-        }
+        var currentEnteringState by remember { mutableStateOf<EnteringState>(SelectingDateRange) }
 
         val templates by settings.templates.collectAsState(
             emptyList(), coroutineScope.coroutineContext
@@ -80,6 +66,7 @@ private fun ShiftPlanImporterApp() {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             when (val enteringState = currentEnteringState) {
                 is SelectingDateRange -> {
+                    // TODO: disable all buttons if no templates available
                     TimeFrameScreen(
                         modifier = Modifier.padding(innerPadding), onStateChange = {
                             @Suppress("AssignedValueIsNeverRead") // reason: False positive
@@ -184,19 +171,10 @@ private fun ReviewScreen(
 ) {
     val context = LocalContext.current
 
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        Log.i(TAG, "Permission request result: $permissions")
-        if (permissions.values.all { it }) {
-            importShiftsToCalendar(context, enteringState.enteredShifts)
-            onStateChange(SelectingDateRange)
-        } else {
-            Toast.makeText(
-                context, "Calendar permissions are required to import shifts.", Toast.LENGTH_LONG
-            ).show()
-        }
-    }
+    val launchCalendarImport = rememberCalendarPermissionLauncher({
+        importShiftsToCalendar(context, enteringState.enteredShifts)
+        onStateChange(SelectingDateRange)
+    }, "Calendar permissions are required to import shifts.")
 
     ReviewView(
         modifier = modifier
@@ -214,18 +192,7 @@ private fun ReviewScreen(
         },
         onImportAll = {
             Log.i(TAG, "Importing shift selection")
-            val allPermissionsGranted = CALENDAR_PERMISSIONS.all {
-                ContextCompat.checkSelfPermission(
-                    context, it
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-            if (allPermissionsGranted) {
-                importShiftsToCalendar(context, enteringState.enteredShifts)
-                onStateChange(SelectingDateRange)
-            } else {
-                Log.d(TAG, "Requesting missing permissions")
-                requestPermissionLauncher.launch(CALENDAR_PERMISSIONS)
-            }
+            launchCalendarImport()
         },
         onExportAll = {
             // TODO: Implement export
