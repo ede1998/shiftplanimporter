@@ -62,6 +62,7 @@ fun getCalendars(context: Context): List<CalendarInfo> {
  */
 @OptIn(ExperimentalTime::class)
 fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
+    var imported = 0
     try {
         val zone = TimeZone.currentSystemDefault()
 
@@ -91,8 +92,8 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
                         else -> {
                             val start = LocalDateTime(shiftEvent.date, it.times.start)
                             val overnight = when (it.times.start < it.times.end) {
-                                false -> 0
-                                true -> 1
+                                false -> 1
+                                true -> 0
                             }
                             val end = LocalDateTime(
                                 shiftEvent.date.plus(overnight, DateTimeUnit.DAY), it.times.end
@@ -104,9 +105,10 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
                             put(CalendarContract.Events.DTEND, endMillis)
                         }
                     }
-
                 }
+                Log.i(TAG, "Inserting event $values")
                 context.contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                imported++
             }
         }
         Log.i(TAG, "Successfully imported ${shifts.size} shifts.")
@@ -117,5 +119,12 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
     } catch (e: SecurityException) {
         Log.e(TAG, "Permission denied for calendar access.", e)
         Toast.makeText(context, R.string.calendar_permission_denied, Toast.LENGTH_LONG).show()
+    } catch (e: Exception) {
+        val failed = shifts.size - imported
+        Log.e(TAG, "Failed to import $failed shifts due to an exception.", e)
+        val toastText = context.resources.getQuantityString(
+            R.plurals.failed_to_import_shifts, failed, failed, shifts.size
+        )
+        Toast.makeText(context, toastText, Toast.LENGTH_LONG).show()
     }
 }

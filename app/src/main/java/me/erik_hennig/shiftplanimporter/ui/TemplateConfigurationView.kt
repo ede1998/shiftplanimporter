@@ -13,15 +13,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,116 +72,136 @@ fun TemplateConfigurationView(
 
     var isCalendarDropdownExpanded by remember { mutableStateOf(false) }
 
-    Column(modifier = modifier.padding(16.dp)) {
-        OutlinedTextField(
-            value = summary,
-            onValueChange = { summary = it },
-            label = { Text(stringResource(R.string.summary)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = isAllDay, onCheckedChange = { isAllDay = it })
-            Text(text = stringResource(R.string.all_day))
-            Spacer(modifier = Modifier.width(16.dp))
-            Row(modifier = Modifier.weight(1f)) {
-                TimeInput(
-                    label = stringResource(R.string.start),
-                    enabled = !isAllDay,
-                    initialTime = startTime,
-                    onSave = { startTime = it },
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                TimeInput(
-                    label = stringResource(R.string.end),
-                    enabled = !isAllDay,
-                    initialTime = endTime,
-                    onSave = { endTime = it },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ExposedDropdownMenuBox(
-            expanded = isCalendarDropdownExpanded,
-            onExpandedChange = { isCalendarDropdownExpanded = !isCalendarDropdownExpanded }) {
+    Scaffold(
+        modifier = modifier, topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.template_configuration)) },
+                navigationIcon = {
+                    IconButton(onClick = onCancel) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cancel)
+                        )
+                    }
+                })
+        }) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
             OutlinedTextField(
-                modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryEditable, true)
-                    .fillMaxWidth(),
-                readOnly = true,
-                value = selectedCalendar?.name ?: "",
-                onValueChange = {},
-                label = { Text(stringResource(R.string.calendar)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCalendarDropdownExpanded) },
+                value = summary,
+                onValueChange = { summary = it },
+                label = { Text(stringResource(R.string.summary)) },
+                modifier = Modifier.fillMaxWidth()
             )
-            ExposedDropdownMenu(
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = isAllDay, onCheckedChange = { isAllDay = it })
+                Text(text = stringResource(R.string.all_day))
+                Spacer(modifier = Modifier.width(16.dp))
+                Row(modifier = Modifier.weight(1f)) {
+                    TimeInput(
+                        label = stringResource(R.string.start),
+                        enabled = !isAllDay,
+                        initialTime = startTime,
+                        onSave = { startTime = it },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TimeInput(
+                        label = stringResource(R.string.end),
+                        enabled = !isAllDay,
+                        initialTime = endTime,
+                        onSave = { endTime = it },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ExposedDropdownMenuBox(
                 expanded = isCalendarDropdownExpanded,
-                onDismissRequest = { isCalendarDropdownExpanded = false }) {
-                calendars.forEach { calendar ->
-                    DropdownMenuItem(text = { Text(calendar.name) }, onClick = {
-                        selectedCalendar = calendar
-                        isCalendarDropdownExpanded = false
-                    })
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = description,
-            onValueChange = { description = it },
-            label = { Text(stringResource(R.string.description)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-        Row {
-            Button(onClick = onCancel) {
-                Text(stringResource(R.string.cancel))
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            Button(onClick = {
-                if (summary == "") {
-                    Log.e(TAG, "Summary cannot be empty")
-                    Toast.makeText(context, R.string.summary_cannot_be_empty, Toast.LENGTH_SHORT)
-                        .show()
-                    return@Button
-                }
-
-                if (!isAllDay && (startTime == null || endTime == null)) {
-                    Log.e(TAG, "Non-all day event must have start and end time")
-                    Toast.makeText(
-                        context,
-                        R.string.non_all_day_event_must_have_start_and_end_time,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    return@Button
-                }
-
-                val calendar = selectedCalendar
-                if (calendar == null) {
-                    Log.e(TAG, "Calendar must be selected")
-                    Toast.makeText(context, R.string.calendar_must_be_selected, Toast.LENGTH_SHORT)
-                        .show()
-                    return@Button
-                }
-
-                val shiftTemplate = ShiftTemplate(
-                    id = initialTemplate?.id ?: UUID.randomUUID().toString(),
-                    summary = summary,
-                    description = description,
-                    times = if (isAllDay) null else ShiftTimes(startTime!!, endTime!!),
-                    calendarId = calendar.id,
+                onExpandedChange = { isCalendarDropdownExpanded = !isCalendarDropdownExpanded }) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+                        .fillMaxWidth(),
+                    readOnly = true,
+                    value = selectedCalendar?.name ?: "",
+                    onValueChange = {},
+                    label = { Text(stringResource(R.string.calendar)) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCalendarDropdownExpanded) },
                 )
+                ExposedDropdownMenu(
+                    expanded = isCalendarDropdownExpanded,
+                    onDismissRequest = { isCalendarDropdownExpanded = false }) {
+                    calendars.forEach { calendar ->
+                        DropdownMenuItem(text = { Text(calendar.name) }, onClick = {
+                            selectedCalendar = calendar
+                            isCalendarDropdownExpanded = false
+                        })
+                    }
+                }
+            }
 
-                onSave(shiftTemplate)
-            }) {
-                Text(stringResource(R.string.save))
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text(stringResource(R.string.description)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+            Row {
+                Button(onClick = onCancel) {
+                    Text(stringResource(R.string.cancel))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Button(onClick = {
+                    if (summary == "") {
+                        Log.e(TAG, "Summary cannot be empty")
+                        Toast.makeText(
+                            context, R.string.summary_cannot_be_empty, Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
+                    if (!isAllDay && (startTime == null || endTime == null)) {
+                        Log.e(TAG, "Non-all day event must have start and end time")
+                        Toast.makeText(
+                            context,
+                            R.string.non_all_day_event_must_have_start_and_end_time,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
+                    val calendar = selectedCalendar
+                    if (calendar == null) {
+                        Log.e(TAG, "Calendar must be selected")
+                        Toast.makeText(
+                            context, R.string.calendar_must_be_selected, Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
+                    val shiftTemplate = ShiftTemplate(
+                        id = initialTemplate?.id ?: UUID.randomUUID().toString(),
+                        summary = summary,
+                        description = description,
+                        times = if (isAllDay) null else ShiftTimes(startTime!!, endTime!!),
+                        calendarId = calendar.id,
+                    )
+
+                    onSave(shiftTemplate)
+                }) {
+                    Text(stringResource(R.string.save))
+                }
             }
         }
     }

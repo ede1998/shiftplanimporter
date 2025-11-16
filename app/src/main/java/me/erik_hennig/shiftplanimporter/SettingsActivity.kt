@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -80,6 +81,12 @@ class SettingsActivity : ComponentActivity() {
                     emptyList(), coroutineScope.coroutineContext
                 )
 
+                val onCancel = {
+                    if (!navController.popBackStack()) {
+                        finish()
+                    }
+                }
+
                 NavHost(
                     navController = navController,
                     startDestination = if (missingPermission) "request_permission" else "template_list"
@@ -87,8 +94,9 @@ class SettingsActivity : ComponentActivity() {
                     composable("request_permission") {
                         RequestCalendarPermissionScreen(onFinish = {
                             calendars = getCalendars(context)
+                            navController.popBackStack()
                             navController.navigate("template_list")
-                        })
+                        }, onCancel = onCancel)
                     }
                     composable("template_list") {
                         TemplateListScreen(
@@ -96,6 +104,7 @@ class SettingsActivity : ComponentActivity() {
                             onAdd = { navController.navigate("template_configuration") },
                             onEdit = { navController.navigate("template_configuration/$it") },
                             onDelete = { coroutineScope.launch { settings.removeTemplate(it) } },
+                            onCancel = onCancel,
                         )
                     }
                     composable("template_configuration") {
@@ -127,11 +136,20 @@ class SettingsActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RequestCalendarPermissionScreen(onFinish: () -> Unit) {
+private fun RequestCalendarPermissionScreen(onFinish: () -> Unit, onCancel: () -> Unit) {
     val requestPermission = rememberCalendarPermissionLauncher(
         onFinish, stringResource(R.string.calendar_permissions_required_template)
     )
-    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.permission_request)) }) }) { paddingValues ->
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.permission_request)) }, navigationIcon = {
+            IconButton(onClick = onCancel) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cancel)
+                )
+            }
+        })
+    }) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -157,18 +175,25 @@ fun TemplateListScreen(
     templates: List<ShiftTemplate>,
     onAdd: () -> Unit,
     onEdit: (String) -> Unit,
-    onDelete: (ShiftTemplate) -> Unit
+    onDelete: (ShiftTemplate) -> Unit,
+    onCancel: () -> Unit
 ) {
-    Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.shift_templates)) }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onAdd) {
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.shift_templates)) }, navigationIcon = {
+            IconButton(onClick = onCancel) {
                 Icon(
-                    Icons.Default.Add,
-                    contentDescription = stringResource(R.string.add_new_template)
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cancel)
                 )
             }
-        }) { paddingValues ->
+        })
+    }, floatingActionButton = {
+        FloatingActionButton(onClick = onAdd) {
+            Icon(
+                Icons.Default.Add, contentDescription = stringResource(R.string.add_new_template)
+            )
+        }
+    }) { paddingValues ->
         LazyColumn(modifier = Modifier.padding(paddingValues)) {
             items(templates) { template ->
                 Row(

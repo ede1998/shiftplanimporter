@@ -34,7 +34,12 @@
         <item quantity="one">1 Schicht erfolgreich importiert</item>
         <item quantity="other">%d Schichten erfolgreich importiert</item>
     </plurals>
+    <plurals name="failed_to_import_shifts">
+        <item quantity="one">1 Schicht konnte nicht importiert werden</item>
+        <item quantity="other">%d (von %d) Schichten konnten nicht importiert werden</item>
+    </plurals>
     <string name="calendar_permission_denied">Kalenderberechtigung verweigert</string>
     <string name="calendar_permissions_required_import">Kalenderberechtigungen sind erforderlich, um Schichten zu importieren.</string>
     <string name="calendar_permissions_required_template">Kalenderberechtigungen sind erforderlich, um verfügbare Kalender für die Erstellung von Schichtvorlagen zu lesen</string>
+    <string name="template_configuration">Vorlage konfigurieren</string>
 </resources>
