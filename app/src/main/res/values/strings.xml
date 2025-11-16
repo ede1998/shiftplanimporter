@@ -42,4 +42,6 @@
     <string name="calendar_permissions_required_import">Calendar permissions are required to import shifts.</string>
     <string name="calendar_permissions_required_template">Calendar permissions required to read available calendars for shift template creation</string>
     <string name="template_configuration">Template configuration</string>
+    <string name="event_color">Color</string>
+    <string name="default_color">Default</string>
 </resources>

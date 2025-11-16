@@ -1,5 +1,6 @@
 package me.erik_hennig.shiftplanimporter.calendar
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.provider.CalendarContract
@@ -17,7 +18,13 @@ import kotlin.time.ExperimentalTime
 
 private const val TAG = "CalendarImporter"
 
-data class CalendarInfo(val id: Long, val name: String, val isPrimary: Boolean)
+data class EventColor(val key: String, val color: Int)
+data class CalendarInfo(
+    val id: Long,
+    val name: String,
+    val isPrimary: Boolean,
+    val availableColors: Set<EventColor> = emptySet()
+)
 
 /**
  * Returns a list of available calendars.
@@ -46,7 +53,8 @@ fun getCalendars(context: Context): List<CalendarInfo> {
             val id = cursor.getLong(idColumn)
             val name = cursor.getString(nameColumn)
             val isPrimary = cursor.getInt(isPrimaryColumn) == 1
-            calendars.add(CalendarInfo(id, name, isPrimary))
+            val colors = getAvailableEventColors(context, id)
+            calendars.add(CalendarInfo(id, name, isPrimary, colors))
         }
     }
     calendars.sortWith(compareByDescending { it.isPrimary })
@@ -55,6 +63,55 @@ fun getCalendars(context: Context): List<CalendarInfo> {
 
     return calendars
 }
+
+private fun getAvailableEventColors(context: Context, calendarId: Long): Set<EventColor> {
+    var accountName: String? = null
+    var accountType: String? = null
+
+    context.contentResolver.query(
+        ContentUris.withAppendedId(CalendarContract.Calendars.CONTENT_URI, calendarId),
+        arrayOf(CalendarContract.Calendars.ACCOUNT_NAME, CalendarContract.Calendars.ACCOUNT_TYPE),
+        null,
+        null,
+        null
+    )?.use { cursor ->
+        if (cursor.moveToFirst()) {
+            accountName = cursor.getString(0)
+            accountType = cursor.getString(1)
+        }
+    }
+
+    if (accountName == null || accountType == null) {
+        Log.w(
+            TAG,
+            "Failed to load event colors for calendar $calendarId has no account name $accountName or account type $accountType."
+        )
+        return emptySet()
+    }
+
+    val colors = mutableSetOf<EventColor>()
+
+    val uri = CalendarContract.Colors.CONTENT_URI
+    context.contentResolver.query(
+        uri,
+        arrayOf(CalendarContract.Colors.COLOR_KEY, CalendarContract.Colors.COLOR),
+        "${CalendarContract.Colors.ACCOUNT_NAME} = ? AND ${CalendarContract.Colors.ACCOUNT_TYPE} = ? AND ${CalendarContract.Colors.COLOR_TYPE} = ?",
+        arrayOf(accountName, accountType, CalendarContract.Colors.TYPE_EVENT.toString()),
+        null
+    )?.use { cursor ->
+        val keyColumn = cursor.getColumnIndexOrThrow(CalendarContract.Colors.COLOR_KEY)
+        val colorColumn = cursor.getColumnIndexOrThrow(CalendarContract.Colors.COLOR)
+        while (cursor.moveToNext()) {
+            val key = cursor.getString(keyColumn)
+            val color = cursor.getInt(colorColumn)
+            colors.add(EventColor(key, color))
+        }
+    }
+
+    Log.d(TAG, "Available event colors for calendar $calendarId: $colors")
+    return colors
+}
+
 
 /**
  * Imports the given list of shift events into the user's primary calendar.
@@ -68,11 +125,14 @@ fun importShiftsToCalendar(context: Context, shifts: List<ShiftEvent>) {
 
         for (shiftEvent in shifts) {
             shiftEvent.template?.let {
+                val calendarId = it.calendarId
+
                 val values = ContentValues().apply {
                     put(CalendarContract.Events.TITLE, it.summary)
                     put(CalendarContract.Events.DESCRIPTION, it.description)
-                    put(CalendarContract.Events.CALENDAR_ID, it.calendarId)
+                    put(CalendarContract.Events.CALENDAR_ID, calendarId)
                     put(CalendarContract.Events.EVENT_TIMEZONE, zone.id)
+                    put(CalendarContract.Events.EVENT_COLOR_KEY, it.eventColorKey)
 
                     when (it.times) {
                         null -> {

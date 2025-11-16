@@ -4,15 +4,20 @@ import android.app.TimePickerDialog
 import android.text.format.DateFormat
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -35,6 +40,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalTime
 import me.erik_hennig.shiftplanimporter.R
 import me.erik_hennig.shiftplanimporter.calendar.CalendarInfo
+import me.erik_hennig.shiftplanimporter.calendar.EventColor
 import me.erik_hennig.shiftplanimporter.data.ShiftTemplate
 import me.erik_hennig.shiftplanimporter.data.ShiftTimes
 import me.erik_hennig.shiftplanimporter.extensions.formatDefault
@@ -69,8 +77,12 @@ fun TemplateConfigurationView(
     var startTime by remember { mutableStateOf(initialTemplate?.times?.start) }
     var endTime by remember { mutableStateOf(initialTemplate?.times?.end) }
     var selectedCalendar by remember { mutableStateOf(calendars.find { it.id == initialTemplate?.calendarId }) }
+    var selectedColor by remember { mutableStateOf(selectedCalendar?.availableColors?.find { it.key == initialTemplate?.eventColorKey }) }
+
+    val supportsColor = selectedCalendar?.availableColors?.isNotEmpty() == true
 
     var isCalendarDropdownExpanded by remember { mutableStateOf(false) }
+    var isColorDropdownExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier, topBar = {
@@ -141,9 +153,74 @@ fun TemplateConfigurationView(
                     onDismissRequest = { isCalendarDropdownExpanded = false }) {
                     calendars.forEach { calendar ->
                         DropdownMenuItem(text = { Text(calendar.name) }, onClick = {
+                            if (selectedCalendar != calendar) {
+                                // If the new calendar doesn't have the selected color, reset it
+                                if (selectedColor !in calendar.availableColors) {
+                                    selectedColor = null
+                                }
+                            }
                             selectedCalendar = calendar
                             isCalendarDropdownExpanded = false
                         })
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = isColorDropdownExpanded, onExpandedChange = {
+                    if (supportsColor) {
+                        isColorDropdownExpanded = !isColorDropdownExpanded
+                    }
+                }) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryEditable, true)
+                        .fillMaxWidth(),
+                    readOnly = true,
+                    value = if (selectedColor == null) stringResource(R.string.default_color) else stringResource(R.string.event_color),
+                    onValueChange = {},
+                    label = { Text(stringResource(R.string.event_color)) },
+                    leadingIcon = selectedColor?.let {
+                        {
+                            Box(
+                                modifier = Modifier
+                                    .padding(start = 12.dp)
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(it.color))
+                                    .border(1.dp, Color.Gray, CircleShape)
+                            )
+                        }
+                    },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isColorDropdownExpanded) },
+                    enabled = supportsColor
+                )
+                ExposedDropdownMenu(
+                    expanded = isColorDropdownExpanded,
+                    onDismissRequest = { isColorDropdownExpanded = false }) {
+                    DropdownMenuItem(text = { Text("Default") }, onClick = {
+                        selectedColor = null
+                        isColorDropdownExpanded = false
+                    })
+                    selectedCalendar?.availableColors?.toList()?.chunked(8)?.forEach { colors ->
+                        Row(Modifier.padding(horizontal = 8.dp)) {
+                            colors.forEach { color ->
+                                IconButton(onClick = {
+                                    selectedColor = color
+                                    isColorDropdownExpanded = false
+                                }) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(color.color))
+                                            .border(1.dp, Color.Gray, CircleShape)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -196,6 +273,7 @@ fun TemplateConfigurationView(
                         description = description,
                         times = if (isAllDay) null else ShiftTimes(startTime!!, endTime!!),
                         calendarId = calendar.id,
+                        eventColorKey = selectedColor?.key
                     )
 
                     onSave(shiftTemplate)
@@ -255,8 +333,12 @@ private fun TemplateConfigurationViewPreview() {
     ShiftPlanImporterTheme {
         TemplateConfigurationView(
             calendars = listOf(
-                CalendarInfo(1, "Personal", isPrimary = false),
-                CalendarInfo(2, "Work", isPrimary = false)
+                CalendarInfo(
+                    1,
+                    "Personal",
+                    isPrimary = false,
+                    availableColors = setOf(EventColor("1", 0xFF00FF00.toInt()))
+                ), CalendarInfo(2, "Work", isPrimary = false)
             ),
             onSave = { }, onCancel = { },
             initialTemplate = null,

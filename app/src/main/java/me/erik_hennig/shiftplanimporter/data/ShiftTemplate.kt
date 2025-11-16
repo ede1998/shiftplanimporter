@@ -10,7 +10,8 @@ data class ShiftTemplate(
     val summary: String,
     val description: String = "",
     val times: ShiftTimes? = null,
-    val calendarId: Long
+    val calendarId: Long,
+    val eventColorKey: String? = null,
 )
 
 @Serializable

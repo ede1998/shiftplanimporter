@@ -42,4 +42,6 @@
     <string name="calendar_permissions_required_import">Kalenderberechtigungen sind erforderlich, um Schichten zu importieren.</string>
     <string name="calendar_permissions_required_template">Kalenderberechtigungen sind erforderlich, um verfügbare Kalender für die Erstellung von Schichtvorlagen zu lesen</string>
     <string name="template_configuration">Vorlage konfigurieren</string>
+    <string name="event_color">Farbe</string>
+    <string name="default_color">Standard</string>
 </resources>
